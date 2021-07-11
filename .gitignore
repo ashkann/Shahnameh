@@ -1,6 +1,8 @@
 # Project exclude paths
 .idea
 project
+.bsp
+.DS_Store
 /backend/target/
 /backend/target/scala-2.13/classes/
 /project/project/target/
