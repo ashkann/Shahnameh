@@ -1,0 +1,9 @@
+//package ir.ashkan.shahnameh
+//
+//import scala.scalajs.js
+//import scala.scalajs.js.annotation.JSImport
+//import scala.scalajs.js.annotation.JSImport.Namespace
+//
+//@js.native
+//@JSImport("jquery", Namespace)
+//object JQuery extends js.Object

@@ -1,0 +1,8 @@
+# Project exclude paths
+/backend/target/
+/backend/target/scala-2.13/classes/
+/project/project/target/
+/project/target/
+/target/
+/WebClient/target/
+/WebClient/target/scala-2.13/classes/
