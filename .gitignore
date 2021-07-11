@@ -1,4 +1,6 @@
 # Project exclude paths
+.idea
+project
 /backend/target/
 /backend/target/scala-2.13/classes/
 /project/project/target/
