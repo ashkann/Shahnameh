@@ -1,6 +1,5 @@
 # Project exclude paths
 .idea
-project
 .bsp
 .DS_Store
 /backend/target/
