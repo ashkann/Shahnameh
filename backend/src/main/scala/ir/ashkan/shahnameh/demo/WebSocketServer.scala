@@ -1,5 +1,4 @@
-//
-//package ir.ashkan.shahnameh
+//package ir.ashkan.shahnameh.demo
 //
 //import cats.Functor
 //import cats.effect._

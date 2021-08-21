@@ -10,9 +10,9 @@ enablePlugins(ScalaJSPlugin)
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-val catsEffectsVersion = "3.1.0"
-val catsVersion = "2.4.2"
-val http4sVersion = "0.23.0-RC1"
+val catsEffectsVersion = "3.2.2"
+val catsVersion = "2.6.1"
+val http4sVersion = "0.23.1"
 val circeVersion = "0.14.1"
 val mouseVersion = "1.0.4"
 
@@ -34,19 +34,21 @@ val backend = (project in file("backend"))
       "org.typelevel" %% "cats-effect-laws" % catsEffectsVersion,
 
       "com.github.pureconfig" %% "pureconfig" % "0.16.0",
+      "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.16.0",
 
       "org.typelevel" %% "mouse" % mouseVersion,
 
-      "com.chuusai" %% "shapeless" % "2.3.3",
-      "org.typelevel" %% "log4cats-slf4j" % "2.0.1",
-      "org.slf4j" % "slf4j-simple" % "1.7.30",
+      "com.chuusai" %% "shapeless" % "2.3.7",
+      "org.typelevel" %% "log4cats-slf4j" % "2.1.1",
+      "org.slf4j" % "slf4j-simple" % "1.7.32",
 
       "dev.optics" %% "monocle-core" % "3.0.0-RC2",
       "dev.optics" %% "monocle-macro" % "3.0.0-RC2",
 
-      "com.beachape" %% "enumeratum" % "1.6.1",
+      "com.beachape" %% "enumeratum" % "1.7.0",
 
-      "co.fs2" %% "fs2-core" % "3.0.0",
+      "co.fs2" %% "fs2-core" % "3.1.0",
+      "com.github.fd4s" %% "fs2-kafka" % "2.2.0",
 
       "org.http4s" %% "http4s-blaze-server" % http4sVersion,
       "org.http4s" %% "http4s-blaze-client" % http4sVersion,
