@@ -5,7 +5,7 @@ import cats.effect.{ExitCode, IO, IOApp}
 import fs2.kafka._
 import ir.ashkan.shahnameh.Config
 
-object HelloWorldKafkaConsumer extends IOApp {
+object ConsoleConsumer extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     for {
       conf <- Config.load[IO]
@@ -13,7 +13,7 @@ object HelloWorldKafkaConsumer extends IOApp {
         ConsumerSettings[IO, Unit, String]
           .withAutoOffsetReset(AutoOffsetReset.Earliest)
           .withBootstrapServers(conf.kafka.bootstrapServers)
-          .withGroupId("shahnameh")
+          .withGroupId(args.headOption.getOrElse("shahnameh"))
 
       _ <- Console[IO].println("Started consuming ...")
 

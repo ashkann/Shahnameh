@@ -7,9 +7,11 @@ import pureconfig.module.catseffect.syntax._
 
 
 object Config {
-  case class Kafka(bootstrapServers: String, topic: String)
+  case class Kafka(bootstrapServers: String, incomingTopic: String, outgoingTopic: String, topic: String)
 
-  case class Application(kafka: Kafka)
+  case class Http(webSocketPort: Int)
+
+  case class Application(kafka: Kafka, http: Http)
 
   def load[F[_]: Sync]: F[Application] = ConfigSource.default.loadF()
 }

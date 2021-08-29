@@ -20,7 +20,7 @@ object HelloWorldKafkaProducer extends IOApp {
       settings = ProducerSettings[IO, Unit, String].withBootstrapServers(config.kafka.bootstrapServers)
       producer = KafkaProducer.stream(settings)
 
-      fiber <- producer.flatMap(p => records.evalMap(p.produce)).compile.drain.start
+      fiber <- producer.flatMap(p => records.evalMap(x => p.produce(x))).compile.drain.start
 
       _ <- Console[IO].println("Press Enter to finish ...")
       _ <- Console[IO].readLine
