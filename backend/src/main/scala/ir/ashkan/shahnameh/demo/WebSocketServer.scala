@@ -42,11 +42,11 @@ object WebSocketServer extends IOApp {
 
   type ConnectionId = Long
 
-  case class Incoming(sender: ConnectionId, text: String)
+  case class Incoming(from: ConnectionId, text: String)
 
-  case class Outgoing(recipient: ConnectionId, text: String)
+  case class Outgoing(to: ConnectionId, text: String)
 
-  case class Connection[F[_]](outgoing: Stream[F, String], incoming: Pipe[F, String, Unit])
+  case class Connection[F[_]](send: Stream[F, String], receive: Pipe[F, String, Unit])
 
   //  trait Ashkan[F[_]] {
   ////    def send(to: ClientId, msg: String): F[Unit]
@@ -59,61 +59,82 @@ object WebSocketServer extends IOApp {
       HttpRoutes.of {
         case GET -> Root / "ws" =>
           connect.flatMap {
-            case Connection(outgoing, incoming) =>
+            case Connection(send, receive) =>
               WebSocketBuilder[F].build(
-                outgoing.map(Text(_)),
-                _.collect { case Text(str, true) => str }.through(incoming)
+                send.map(Text(_)),
+                _.collect { case Text(str, true) => str }.through(receive)
               )
           }
       }
 
+    def fromKafka(config: Config.Kafka): Stream[IO, Outgoing] = {
+      val settings = ConsumerSettings[IO, Unit, Outgoing]
+        .withAutoOffsetReset(AutoOffsetReset.Latest)
+        .withBootstrapServers(config.bootstrapServers)
+        .withGroupId("outgoing-consumer-group")
+
+      KafkaConsumer.stream(settings)
+        .evalTap(_.subscribeTo(config.outgoingTopic))
+        .flatMap(_.stream)
+        .map(_.record.value)
+    }
+
+    def toKafka(config: Config.Kafka): Pipe[IO, Incoming, _] = { incoming =>
+      val records = incoming.map(msg => ProducerRecord(config.topic, (), msg) |> ProducerRecords.one)
+      val settings = ProducerSettings[IO, Unit, Incoming].withBootstrapServers(config.bootstrapServers)
+      KafkaProducer.stream(settings).flatMap(p => records.evalMap(r => p.produce(r)))
+    }
+
+    class Port(
+       connections: Ref[IO, Map[ConnectionId, Topic[IO, String]]],
+       genId: IO[ConnectionId],
+       incoming: Pipe[IO, Incoming, Nothing]
+     ) {
+
+      def send: Pipe[IO, Outgoing, Unit] = _.evalMap {
+        case Outgoing(to, msg) => connections.get.flatMap(_.get(to).fold(IO.unit)(_.publish1(msg).void))
+      }
+
+      def connect: IO[Connection[IO]] =
+        for {
+          id <- genId
+          topic <- Topic[IO, String]
+          _ <- connections.update(_.updated(id, topic))
+          receive: Pipe[IO, String, Unit] = (_: Stream[IO, String]).map(Incoming(id, _)).through(incoming)
+          send = topic.subscribe(10)
+        } yield Connection(send, receive)
+    }
+
+    object Port {
+      def apply(incoming: Pipe[IO, Incoming, Nothing]): IO[Port] =
+        for {
+          connections <- Ref[IO].of(Map.empty[ConnectionId, Topic[IO, String]])
+          getConnectionId = Ref[IO].of(0L).flatMap(_.updateAndGet(_ + 1))
+        } yield new Port(connections, getConnectionId, incoming)
+    }
+
     for {
       config <- Config.load[IO]
 
-      outgoing = {
-        val settings = ConsumerSettings[IO, Unit, Outgoing]
-          .withAutoOffsetReset(AutoOffsetReset.Latest)
-          .withBootstrapServers(config.kafka.bootstrapServers)
-          .withGroupId("outgoing-consumer-group")
+      incomingTopic <- Topic[IO, Incoming]
+      incoming: Stream[IO, Incoming] = incomingTopic.subscribe(10)
 
-        KafkaConsumer.stream(settings)
-          .evalTap(_.subscribeTo(config.kafka.outgoingTopic))
-          .flatMap(_.stream)
-          .map(_.record.value)
-      }
+      port <- Port(incomingTopic.publish)
 
-      lastConnectionId <- Ref[IO].of(0)
-      connections <- Ref[IO].of(Map.empty[ConnectionId, Topic[IO, String]])
-
-      o = outgoing.evalMap {
-        case Outgoing(to, text) => connections.get.flatMap(_.get(to).fold(IO.unit)(_.publish1(text).void))
-      }
-
-      incoming <- Topic[IO, Incoming].map(_.publish)
-      a = {
-        val records = topic.subscribe(10)
-          .map(msg => ProducerRecord(config.kafka.topic, (), msg) |> ProducerRecords.one)
-
-        val settings = ProducerSettings[IO, Unit, Incoming].withBootstrapServers(config.kafka.bootstrapServers)
-        val incoming = KafkaProducer.stream(settings).flatMap(p => records.evalMap(p.produce))
-      }
-
-      connect = for {
-        topic <- Topic[IO, String]
-        connectionId <- lastConnectionId.updateAndGet(_ + 1)
-        _ <- connections.update(_.updated(connectionId, topic))
-        send = topic.subscribe(10)
-        receive: Pipe[IO, String, Unit] = (_: Stream[IO, String]).map(Incoming(connectionId, _)).through(incoming)
-      } yield Connection(send, receive)
+      sends <- fromKafka(config.kafka).through(port.send).compile.drain.start
+      receives <- incoming.through(toKafka(config.kafka)).compile.drain.start
 
       _ <- BlazeServerBuilder[IO](global)
         .bindHttp(config.http.webSocketPort)
-        .withHttpApp(routes[IO](connect).orNotFound)
+        .withHttpApp(routes[IO](port.connect).orNotFound)
         .serve
         .compile
         .drain
+        .guarantee(sends.cancel)
+        .guarantee(receives.cancel)
 
       _ <- Console[IO].println("Terminated")
     } yield ExitCode.Success
   }
+
 }
