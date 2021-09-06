@@ -10,7 +10,7 @@ enablePlugins(ScalaJSPlugin)
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-val catsEffectsVersion = "3.2.2"
+val catsEffectsVersion = "3.2.5"
 val catsVersion = "2.6.1"
 val http4sVersion = "0.23.1"
 val circeVersion = "0.14.1"
@@ -47,7 +47,7 @@ val backend = (project in file("backend"))
 
       "com.beachape" %% "enumeratum" % "1.7.0",
 
-      "co.fs2" %% "fs2-core" % "3.1.0",
+      "co.fs2" %% "fs2-core" % "3.1.1",
       "com.github.fd4s" %% "fs2-kafka" % "2.2.0",
 
       "org.http4s" %% "http4s-blaze-server" % http4sVersion,
@@ -61,7 +61,7 @@ val backend = (project in file("backend"))
 
       "org.apache.kafka" % "kafka-clients" % "2.8.0"
     ),
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.0" cross CrossVersion.full),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.1" cross CrossVersion.full),
   )
 
 val WebClient = (project in file("WebClient"))

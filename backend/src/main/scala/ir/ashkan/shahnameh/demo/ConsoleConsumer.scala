@@ -13,12 +13,12 @@ object ConsoleConsumer extends IOApp {
         ConsumerSettings[IO, Unit, String]
           .withAutoOffsetReset(AutoOffsetReset.Earliest)
           .withBootstrapServers(conf.kafka.bootstrapServers)
-          .withGroupId(args.headOption.getOrElse("shahnameh"))
+          .withGroupId("console-consumer-group")
 
       _ <- Console[IO].println("Started consuming ...")
 
       _ <- KafkaConsumer.stream(settings)
-        .evalTap(_.subscribeTo(conf.kafka.topic))
+        .evalTap(_.subscribeTo(args.head))
         .flatMap(_.stream)
         .evalMap(r => Console[IO].println(r.record.value))
         .compile.drain

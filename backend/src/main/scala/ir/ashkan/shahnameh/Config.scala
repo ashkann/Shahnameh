@@ -7,7 +7,7 @@ import pureconfig.module.catseffect.syntax._
 
 
 object Config {
-  case class Kafka(bootstrapServers: String, incomingTopic: String, outgoingTopic: String, topic: String)
+  case class Kafka(bootstrapServers: String, sendTopic: String, receiveTopic: String)
 
   case class Http(webSocketPort: Int)
 

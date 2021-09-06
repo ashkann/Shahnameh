@@ -13,7 +13,7 @@ object HelloWorldKafkaProducer extends IOApp {
       config <- Config.load[IO]
 
       records = Stream.iterate(0)(_ + 1)
-        .map(n => ProducerRecord(config.kafka.topic, (), s"Message #$n"))
+        .map(n => ProducerRecord(config.kafka.sendTopic, (), s"Message #$n"))
         .map(r => ProducerRecords.one(r))
         .zipLeft(Stream.awakeEvery[IO](1.second))
 
