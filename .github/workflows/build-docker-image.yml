@@ -1,4 +1,4 @@
-name: Scala CI
+name: Build docker image
 
 on:
   push:
