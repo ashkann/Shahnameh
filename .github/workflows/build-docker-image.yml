@@ -20,3 +20,5 @@ jobs:
         distribution: 'adopt'
     - name: build docker image
       run: sbt backend/Docker/publishLocal
+    - name: push to container registry
+      run: docker push ghcr.io/ashkann/webserver-socket:0.1.0-SNAPSHOT
