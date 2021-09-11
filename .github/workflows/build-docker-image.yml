@@ -7,33 +7,28 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup JDK
-      uses: actions/setup-java@v2
-      with:
-        java-version: '8'
-        distribution: 'adopt'
-    - name: Build docker image
-      run: sbt backend/Docker/publishLocal
+#  build:
+#    runs-on: ubuntu-latest
+#    steps:
+#    - uses: actions/checkout@v2
+#    - name: JDK
+#      uses: actions/setup-java@v2
+#      with:
+#        java-version: '8'
+#        distribution: 'adopt'
+#    - name: Build docker image
+#      run: sbt backend/Docker/publishLocal
+#    - name: Login to ghrc
+#      uses: docker/login-action@v1
+#      with:
+#        registry: ghcr.io
+#        username: ${{ github.actor }}
+#        password: ${{ secrets.GITHUB_TOKEN }}
+#    - name: Push to ghrc
+#    - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Login
-      uses: docker/login-action@v1
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Push
-    - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
-
-  deploy-to-cloud:
-    needs: release
+  deploy:
+#    needs: build
     runs-on: ubuntu-latest
     steps:
     - name: Login to GKE
