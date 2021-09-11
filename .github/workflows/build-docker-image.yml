@@ -49,7 +49,7 @@ jobs:
         cluster_name: shahnameh
         location: us-central1-a
         credentials: ${{ secrets.GKE_SA_KEY }}
-        project_id: shahnameh
+        project_id: shahnameh1
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
     - id: get-pods
       run: kubectl get pods
