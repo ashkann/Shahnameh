@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -38,7 +37,7 @@ jobs:
       with:
         cluster_name: shahnameh
         location: us-central1-a
-        credentials: ${{ secrets.gcp_credentials }}
+        credentials: ${{ secrets.GKE_SA_KEY }}
 
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
     - id: get-pods
