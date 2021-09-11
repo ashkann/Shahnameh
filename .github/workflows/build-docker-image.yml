@@ -19,25 +19,21 @@ jobs:
     - name: Build docker image
       run: sbt backend/Docker/publishLocal
 
-  build-docker-image:
+  release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - name: Login to container registry
+    - name: Login
       uses: docker/login-action@v1
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-to-container-registry:
-    needs: build-docker-image
-    runs-on: ubuntu-latest
-    steps:
-        - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
+    - name: Push
+    - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
 
   deploy-to-cloud:
-    needs: publish-to-container-registry
+    needs: release
     runs-on: ubuntu-latest
     steps:
     - name: Login to GKE
