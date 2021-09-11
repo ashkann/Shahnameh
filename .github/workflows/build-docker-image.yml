@@ -26,6 +26,7 @@ jobs:
 #        password: ${{ secrets.GITHUB_TOKEN }}
 #    - name: Push to ghrc
 #    - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
+# force push
 
   deploy:
 #    needs: build
