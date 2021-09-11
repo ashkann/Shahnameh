@@ -9,19 +9,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
-
     - name: Setup JDK
       uses: actions/setup-java@v2
       with:
         java-version: '8'
         distribution: 'adopt'
-
     - name: Build docker image
       run: sbt backend/Docker/publishLocal
 
+  build-docker-image:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
     - name: Login to container registry
       uses: docker/login-action@v1
       with:
@@ -29,9 +30,16 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Push to container registry
-      run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
+  publish-to-container-registry:
+    needs: build-docker-image
+    runs-on: ubuntu-latest
+    steps:
+        - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
 
+  deploy-to-cloud:
+    needs: publish-to-container-registry
+    runs-on: ubuntu-latest
+    steps:
     - name: Login to GKE
       uses: google-github-actions/get-gke-credentials@main
       with:
