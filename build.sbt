@@ -64,7 +64,7 @@ val backend = (project in file("backend"))
     libraryDependencies := backendDependencies,
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
     Compile/mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer"),
-    Docker/packageName := "shahnameh-backend",
+    Docker/packageName := "ghcr.io/ashkann/shahnameh-backend",
     executableScriptName := "websocket-server",
     dockerExposedPorts := Seq(80),
   ).enablePlugins(JavaServerAppPackaging)
