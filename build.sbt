@@ -10,9 +10,9 @@ enablePlugins(ScalaJSPlugin)
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
-val catsEffectsVersion = "3.2.5"
+val catsEffectsVersion = "3.2.7"
 val catsVersion = "2.6.1"
-val http4sVersion = "0.23.1"
+val http4sVersion = "0.23.3"
 val circeVersion = "0.14.1"
 val mouseVersion = "1.0.4"
 
@@ -39,8 +39,8 @@ val backendDependencies = Seq(
   "org.typelevel" %% "log4cats-slf4j" % "2.1.1",
   "org.slf4j" % "slf4j-simple" % "1.7.32",
 
-  "dev.optics" %% "monocle-core" % "3.0.0-RC2",
-  "dev.optics" %% "monocle-macro" % "3.0.0-RC2",
+  "dev.optics" %% "monocle-core" % "3.1.0",
+  "dev.optics" %% "monocle-macro" % "3.1.0",
 
   "com.beachape" %% "enumeratum" % "1.7.0",
 
@@ -63,11 +63,8 @@ val backend = (project in file("backend"))
     scalaVersion := "2.13.6",
     libraryDependencies := backendDependencies,
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
-    Compile/mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer"),
-    Docker/packageName := "ghcr.io/ashkann/shahnameh-backend",
-    executableScriptName := "websocket-server",
-    dockerExposedPorts := Seq(80),
-  ).enablePlugins(JavaServerAppPackaging)
+    Compile/mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer")
+  )
 
 val WebClient = (project in file("WebClient"))
   .settings(

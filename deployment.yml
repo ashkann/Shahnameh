@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: shahnameh-backend
-          image: ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
+          image: ghcr.io/ashkann/shahnameh-backend
           imagePullPolicy: Always
           ports:
             - containerPort: 80

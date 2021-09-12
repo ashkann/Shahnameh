@@ -9,6 +9,7 @@ env:
   PROJECT_ID: shahname # not shahname*h*
   CLUSTER: shahnameh
   ZONE: us-central1-c
+  IMAGE: ghcr.io/ashkann/shahnameh-backend
 
 jobs:
   build:
@@ -19,13 +20,14 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
-      - run: sbt backend/Docker/publishLocal
+      - run: sbt backend/assembly
+      - run: docker build -t ${{ env.IMAGE }} .
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
+      - run: docker push ${{ env.IMAGE }}
 
       #  deploy:
       #    needs: build
