@@ -42,13 +42,13 @@ jobs:
 #    - run: gcloud --quiet auth configure-docker
 #    - run: gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
 
-    - name: Login to GKE
-      uses: google-github-actions/get-gke-credentials@main
-      with:
-        cluster_name: shahnameh
-        location: us-central1-a
-        credentials: ${{ secrets.GKE_SA_KEY }}
-        project_id: shahnameh
+#    - name: Login to GKE
+#      uses: google-github-actions/get-gke-credentials@main
+#      with:
+#        cluster_name: shahnameh
+#        location: us-central1-a
+#        credentials: ${{ secrets.GKE_SA_KEY }}
+#        project_id: shahnameh
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
     - id: get-pods
       run: kubectl get pods
