@@ -37,7 +37,7 @@ jobs:
       with:
         project_id: shahnameh
         service_account_key: ${{ secrets.GKE_SA_KEY }}
-    - run: gcloud config set project shahnameh
+    - run: gcloud config set project shahname
     - run: gcloud container clusters get-credentials shahnameh --zone us-central1-c
     - run: gcloud --quiet auth configure-docker
 
