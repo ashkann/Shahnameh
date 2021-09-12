@@ -35,7 +35,7 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@master
       with:
-        project_id: shahnameh
+        project_id: shahname
         service_account_key: ${{ secrets.GKE_SA_KEY }}
     - run: gcloud config set project shahname
     - run: gcloud container clusters get-credentials shahnameh --zone us-central1-c
