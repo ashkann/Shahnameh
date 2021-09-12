@@ -37,8 +37,8 @@ jobs:
       with:
         project_id: shahnameh
         service_account_key: ${{ secrets.GKE_SA_KEY }}
-    - name: Use gcloud CLI
-      run: gcloud info
+
+    - run: gcloud --quiet auth configure-docker
 #    - run: gcloud --quiet auth configure-docker
 #    - run: gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
 
@@ -50,5 +50,4 @@ jobs:
 #        credentials: ${{ secrets.GKE_SA_KEY }}
 #        project_id: shahnameh
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
-    - id: get-pods
-      run: kubectl get pods
+    - run: kubectl get pods
