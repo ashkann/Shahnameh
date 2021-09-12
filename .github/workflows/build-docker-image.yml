@@ -48,7 +48,7 @@ jobs:
     - name: Login to GKE
       uses: google-github-actions/get-gke-credentials@main
       with:
-        cluster_name: ${{ env.$CLUSTER }}
+        cluster_name: ${{ env.CLUSTER }}
         location: ${{ env.ZONE }}
         credentials: ${{ secrets.GKE_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
