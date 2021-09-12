@@ -44,4 +44,5 @@ jobs:
         credentials: ${{ secrets.GKE_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
+    - run: ls ${{ github.workspace }}
     - run: kubectl apply -f ${{ github.workspace }}/deployment.yml
