@@ -46,6 +46,11 @@ object WebSocketServer extends IOApp {
                 _.collect { case Text(str, true) => str }.through(receive)
               )
           }
+
+        case GET -> Root / "healthz" =>
+          val dsl = org.http4s.dsl.Http4sDsl[F]
+          import dsl._
+          Ok()
       }
 
     for {
