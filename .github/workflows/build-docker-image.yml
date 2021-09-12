@@ -45,7 +45,7 @@ jobs:
       uses: google-github-actions/get-gke-credentials@main
       with:
         cluster_name: shahnameh
-        location: us-central1-a
+        location: us-central1-c
         credentials: ${{ secrets.GKE_SA_KEY }}
         project_id: shahname
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
