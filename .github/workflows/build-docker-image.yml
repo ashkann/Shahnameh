@@ -11,10 +11,10 @@ env:
   ZONE: us-central1-c
 
 jobs:
-#  build:
-#    runs-on: ubuntu-latest
-#    steps:
-#    - uses: actions/checkout@v2
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
 #    - name: JDK
 #      uses: actions/setup-java@v2
 #      with:
@@ -32,10 +32,10 @@ jobs:
 #    - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
 # force push
 
-  deploy:
+#  deploy:
 #    needs: build
-    runs-on: ubuntu-latest
-    steps:
+#    runs-on: ubuntu-latest
+#    steps:
     - name: Login to GKE
       uses: google-github-actions/get-gke-credentials@main
       with:
