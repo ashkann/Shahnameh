@@ -37,7 +37,6 @@ jobs:
       with:
         project_id: shahnameh
         service_account_key: ${{ secrets.GKE_SA_KEY }}
-        export_default_credentials: true
     - name: Use gcloud CLI
       run: gcloud info
 #    - run: gcloud --quiet auth configure-docker
