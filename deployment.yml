@@ -19,22 +19,22 @@ spec:
           image: ghcr.io/ashkann/shahnameh-backend
           imagePullPolicy: Always
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           livenessProbe:
             httpGet:
               path: /healthz
-              port: 80
+              port: 8080
             failureThreshold: 1
             periodSeconds: 10
           startupProbe:
             httpGet:
               path: /healthz
-              port: 80
+              port: 8080
             failureThreshold: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /healthz
-              port: 80
+              port: 8080
             failureThreshold: 30
             periodSeconds: 10

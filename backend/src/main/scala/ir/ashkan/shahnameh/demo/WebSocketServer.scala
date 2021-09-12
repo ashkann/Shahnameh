@@ -62,7 +62,7 @@ object WebSocketServer extends IOApp {
       receives <- (config.kafka |> Kafka.receive |> port.receive).compile.drain.start
 
       _ <- BlazeServerBuilder[IO](global)
-        .bindHttp(config.http.webSocketPort)
+        .bindHttp(config.http.webSocketPort,"0.0.0.0")
         .withHttpApp(routes[IO](port.connect).orNotFound)
         .serve
         .compile
