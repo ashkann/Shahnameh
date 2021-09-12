@@ -44,4 +44,4 @@ jobs:
         credentials: ${{ secrets.GKE_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
-    - run: kubectl apply -f https://k8s.io/examples/controllers/nginx-deployment.yaml
+    - run: kubectl apply -f deployment.yml
