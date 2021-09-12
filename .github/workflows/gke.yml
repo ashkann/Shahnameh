@@ -21,10 +21,10 @@ jobs:
           distribution: 'adopt'
       - run: sbt backend/Docker/publishLocal
       - uses: docker/login-action@v1
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - run: docker push ghcr.io/ashkann/shahnameh-backend:0.1.0-SNAPSHOT
 
       #  deploy:
