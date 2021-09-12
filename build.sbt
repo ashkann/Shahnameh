@@ -66,7 +66,7 @@ val backend = (project in file("backend"))
     Compile/mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer"),
     Docker/packageName := "ghcr.io/ashkann/shahnameh-backend",
     executableScriptName := "websocket-server",
-    dockerExposedPorts := Seq(8080),
+    dockerExposedPorts := Seq(80),
   ).enablePlugins(JavaServerAppPackaging)
 
 val WebClient = (project in file("WebClient"))
