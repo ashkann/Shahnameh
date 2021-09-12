@@ -5,6 +5,10 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+env:
+  PROJECT_ID: shahname # not shahname*h*
+  CLUSTER: shahnameh
+  ZONE: us-central1-c
 
 jobs:
 #  build:
@@ -44,9 +48,9 @@ jobs:
     - name: Login to GKE
       uses: google-github-actions/get-gke-credentials@main
       with:
-        cluster_name: shahnameh
-        location: us-central1-c
+        cluster_name: $CLUSTER
+        location: $ZONE
         credentials: ${{ secrets.GKE_SA_KEY }}
-        project_id: shahname
+        project_id: $PROJECT_ID
     # The KUBECONFIG env var is automatically exported and picked up by kubectl.
     - run: kubectl get pods
