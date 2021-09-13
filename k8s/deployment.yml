@@ -79,3 +79,35 @@ spec:
   resources:
     requests:
       storage: 30Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres
+type: kubernetes.io/basic-auth
+stringData:
+  username: admin
+  password: t0p-Secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: 13.4-alpine
+          env:
+            - name: POSTGRES_PASSWORD
+              value: "ashkan"
