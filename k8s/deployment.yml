@@ -107,7 +107,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: 13.4-alpine
+          image: postgres:13.4-alpine
           env:
             - name: POSTGRES_PASSWORD
               value: "ashkan"
