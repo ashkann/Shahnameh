@@ -86,8 +86,8 @@ metadata:
   name: postgres
 type: kubernetes.io/basic-auth
 stringData:
-  username: shahnahem
-  password: shahname
+  username: shahnameh
+  password: shahnameh
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -111,3 +111,10 @@ spec:
           env:
             - name: POSTGRES_PASSWORD
               value: "ashkan"
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data"
+              name: postgres
+      volumes:
+        - name: postgres
+          persistentVolumeClaim:
+            claimName: postgres
