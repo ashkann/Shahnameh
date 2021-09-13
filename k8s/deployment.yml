@@ -86,8 +86,8 @@ metadata:
   name: postgres
 type: kubernetes.io/basic-auth
 stringData:
-  username: admin
-  password: t0p-Secret
+  username: shahnahem
+  password: shahname
 ---
 apiVersion: apps/v1
 kind: Deployment
