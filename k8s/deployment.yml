@@ -126,6 +126,6 @@ kind: Secret
 metadata:
   name: google-openid-connect
 type: Opaque
-data:
+stringData:
   clientId: shahnameh
   clientSecret: shahnameh
