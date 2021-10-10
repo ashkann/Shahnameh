@@ -38,6 +38,17 @@ spec:
               port: 8080
             failureThreshold: 30
             periodSeconds: 10
+          env:
+            - name: GOOGLE_OCID_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: google-openid-connect
+                  key: clientId
+            - name: GOOGLE_OCID_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: google-openid-connect
+                  key: clientSecret
 ---
 apiVersion: v1
 kind: Service
@@ -80,15 +91,6 @@ spec:
     requests:
       storage: 30Gi
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: postgres
-type: kubernetes.io/basic-auth
-stringData:
-  username: shahnameh
-  password: shahnameh
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -120,12 +122,3 @@ spec:
         - name: postgres
           persistentVolumeClaim:
             claimName: postgres
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: google-openid-connect
-type: Opaque
-stringData:
-  clientId: shahnameh
-  clientSecret: shahnameh
