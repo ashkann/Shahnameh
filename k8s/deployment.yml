@@ -41,6 +41,11 @@ spec:
           env:
             - name: GOOGLE_OCID_CLIENT_ID
               valueFrom:
+                configMapKeyRef:
+                  name: shahnameh
+                  key: google-ocid-redirect-uri
+            - name: GOOGLE_OCID_CLIENT_ID
+              valueFrom:
                 secretKeyRef:
                   name: google-openid-connect
                   key: clientId
@@ -122,3 +127,10 @@ spec:
         - name: postgres
           persistentVolumeClaim:
             claimName: postgres
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shahnameh
+data:
+  google-ocid-redirect-uri: "http://shahnameh.xyz/googleOpenIdConnect?"
