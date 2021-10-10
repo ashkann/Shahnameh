@@ -120,3 +120,12 @@ spec:
         - name: postgres
           persistentVolumeClaim:
             claimName: postgres
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: google-openid-connect
+type: Opaque
+data:
+  clientId: shahnameh
+  clientSecret: shahnameh
