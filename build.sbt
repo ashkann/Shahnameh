@@ -17,10 +17,6 @@ val sttpVersion = "3.3.15"
 
 scalacOptions in Global += "-Ymacro-annotations"
 
-Compile / PB.targets := Seq(
-  scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
-)
-
 val backendDependencies = Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
   "org.typelevel" %% "cats-free" % catsVersion,
@@ -41,29 +37,22 @@ val backendDependencies = Seq(
   "dev.optics" %% "monocle-core" % "3.1.0",
   "dev.optics" %% "monocle-macro" % "3.1.0",
 
-  "com.beachape" %% "enumeratum" % "1.7.0",
-
   "co.fs2" %% "fs2-core" % "3.1.4",
   "com.github.fd4s" %% "fs2-kafka" % "2.2.0",
+  "org.apache.kafka" % "kafka-clients" % "2.8.0",
 
   "org.http4s" %% "http4s-blaze-server" % http4sVersion,
-  "org.http4s" %% "http4s-blaze-client" % http4sVersion,
   "org.http4s" %% "http4s-circe" % http4sVersion,
   "org.http4s" %% "http4s-dsl" % http4sVersion,
+
+  "com.softwaremill.sttp.client3" %% "core" % sttpVersion,
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % sttpVersion,
 
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
 
-  "org.apache.kafka" % "kafka-clients" % "2.8.0",
-
-  "com.google.api-client" % "google-api-client" % "1.32.1",
-
-  "com.softwaremill.sttp.client3" %% "core" % sttpVersion,
-  "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % sttpVersion,
-
-  "com.github.jwt-scala" %% "jwt-core" % "9.0.1",
-  "com.github.jwt-scala" %% "jwt-circe" % "9.0.1"
+  "com.github.jwt-scala" %% "jwt-core" % "9.0.2",
 )
 
 val backend = (project in file("backend"))
@@ -72,7 +61,11 @@ val backend = (project in file("backend"))
     libraryDependencies := backendDependencies,
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-    Compile/mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer")
+    Compile / mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer"),
+    assembly / assemblyMergeStrategy := {
+      case PathList("META-INF", _) => MergeStrategy.discard
+      case other => (assembly / assemblyMergeStrategy).value(other)
+    }
   )
 
 val WebClient = (project in file("WebClient"))
