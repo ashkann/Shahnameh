@@ -16,25 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-#      - uses: actions/setup-java@v2
-#        with:
-#          java-version: '8'
-#          distribution: 'adopt'
-#      - run: sbt backend/assembly
-#      - run: docker build -t ${{ env.IMAGE }} .
-#      - uses: docker/login-action@v1
-#        with:
-#          registry: ghcr.io
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#      - run: docker push ${{ env.IMAGE }}
-
-      #  deploy:
-      #    needs: build
-      #    runs-on: ubuntu-latest
-      #    steps:
-      - name: Login to GKE
-        uses: google-github-actions/get-gke-credentials@main
+      - uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+      - run: sbt backend/assembly
+      - run: docker build -t ${{ env.IMAGE }} .
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker push ${{ env.IMAGE }}
+      - uses: google-github-actions/get-gke-credentials@main
         with:
           cluster_name: ${{ env.CLUSTER }}
           location: ${{ env.ZONE }}
