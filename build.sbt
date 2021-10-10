@@ -8,13 +8,12 @@ scalaVersion := "2.13.6"
 
 enablePlugins(ScalaJSPlugin)
 
-addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
-
-val catsEffectsVersion = "3.2.7"
+val catsEffectsVersion = "3.2.8"
 val catsVersion = "2.6.1"
-val http4sVersion = "0.23.3"
+val http4sVersion = "0.23.4"
 val circeVersion = "0.14.1"
 val mouseVersion = "1.0.4"
+val sttpVersion = "3.3.15"
 
 scalacOptions in Global += "-Ymacro-annotations"
 
@@ -30,8 +29,8 @@ val backendDependencies = Seq(
   "org.typelevel" %% "cats-effect" % catsEffectsVersion,
   "org.typelevel" %% "cats-effect-laws" % catsEffectsVersion,
 
-  "com.github.pureconfig" %% "pureconfig" % "0.16.0",
-  "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.16.0",
+  "com.github.pureconfig" %% "pureconfig" % "0.17.0",
+  "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.17.0",
 
   "org.typelevel" %% "mouse" % mouseVersion,
 
@@ -44,7 +43,7 @@ val backendDependencies = Seq(
 
   "com.beachape" %% "enumeratum" % "1.7.0",
 
-  "co.fs2" %% "fs2-core" % "3.1.1",
+  "co.fs2" %% "fs2-core" % "3.1.4",
   "com.github.fd4s" %% "fs2-kafka" % "2.2.0",
 
   "org.http4s" %% "http4s-blaze-server" % http4sVersion,
@@ -56,13 +55,23 @@ val backendDependencies = Seq(
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-parser" % circeVersion,
 
-  "org.apache.kafka" % "kafka-clients" % "2.8.0"
+  "org.apache.kafka" % "kafka-clients" % "2.8.0",
+
+  "com.google.api-client" % "google-api-client" % "1.32.1",
+
+  "com.softwaremill.sttp.client3" %% "core" % sttpVersion,
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % sttpVersion,
+
+  "com.github.jwt-scala" %% "jwt-core" % "9.0.1",
+  "com.github.jwt-scala" %% "jwt-circe" % "9.0.1"
 )
+
 val backend = (project in file("backend"))
   .settings(
     scalaVersion := "2.13.6",
     libraryDependencies := backendDependencies,
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
     Compile/mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer")
   )
 

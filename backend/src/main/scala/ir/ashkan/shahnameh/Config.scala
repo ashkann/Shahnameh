@@ -1,9 +1,11 @@
 package ir.ashkan.shahnameh
 
 import cats.effect.kernel.Sync
-import pureconfig.ConfigSource
+import pureconfig.{ConfigReader, ConfigSource}
 import pureconfig.generic.auto._
 import pureconfig.module.catseffect.syntax._
+import sttp.model.Uri
+import scala.util.Try
 
 
 object Config {
@@ -11,7 +13,10 @@ object Config {
 
   case class Http(webSocketPort: Int)
 
-  case class Application(kafka: Kafka, http: Http)
+  case class GoogleOIDC(clientId: String, clientSecret: String, redirectUri: Uri, discoveryDocumentUri: Uri)
 
-  def load[F[_]: Sync]: F[Application] = ConfigSource.default.loadF()
+  case class Application(kafka: Kafka, http: Http, googleOpenidConnect: GoogleOIDC)
+
+  implicit val uriReader: ConfigReader[Uri] = ConfigReader.fromStringTry(str => Try(Uri.unsafeParse(str)))
+  def load[F[_]: Sync]: F[Application] = ConfigSource.default.loadF[F, Application]()
 }
