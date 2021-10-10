@@ -39,7 +39,7 @@ spec:
             failureThreshold: 30
             periodSeconds: 10
           env:
-            - name: GOOGLE_OCID_CLIENT_ID
+            - name: GOOGLE_OCID_REDIRECT_URI
               valueFrom:
                 configMapKeyRef:
                   name: shahnameh
