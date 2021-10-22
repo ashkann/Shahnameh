@@ -1,59 +1,111 @@
 package ir.ashkan.shahnameh.demo
 
+import cats.data.{Kleisli, OptionT}
 import cats.effect._
 import cats.effect.std.Console
 import cats.syntax.flatMap._
-import ir.ashkan.shahnameh.{Config, Connection, GoogleOIDC, Port}
+import doobie.hikari.HikariTransactor
+import doobie.util.ExecutionContexts
+import ir.ashkan.shahnameh.{Config, Connection, GoogleOIDC, Port, UserService}
 import org.http4s.headers.Location
-//import mouse.any._
-import org.http4s.HttpRoutes
+import org.http4s.{AuthedRoutes, HttpRoutes, Request, ResponseCookie, Uri}
 import org.http4s.blaze.server.BlazeServerBuilder
+import org.http4s.server.AuthMiddleware
 import org.http4s.server.websocket._
 import org.http4s.websocket.WebSocketFrame._
+import cats.syntax.semigroupk._
+import ir.ashkan.shahnameh.UserService.User
 
 import scala.concurrent.ExecutionContext.global
 
 
 object WebSocketServer extends IOApp {
-  def app[F[_] : Async](connect: F[Connection[F]], googleOIDC: GoogleOIDC): HttpRoutes[F] = {
-    import org.http4s.QueryParamDecoder._
-    val dsl = org.http4s.dsl.Http4sDsl[F]
-    import dsl._
+  import org.http4s.dsl.io._
 
+  private def googleOCIDRoutes(googleOIDC: GoogleOIDC, users: UserService[IO]): HttpRoutes[IO] = {
     object StateParam extends QueryParamDecoderMatcher[String]("state")
     object CodeParam extends QueryParamDecoderMatcher[String]("code")
 
     HttpRoutes.of {
-      case GET -> Root / "ws" =>
-        connect.flatMap {
-          case Connection(send, receive) =>
-            WebSocketBuilder[F].build(
-              send.map(Text(_)),
-              _.collect { case Text(str, true) => str }.through(receive)
-            )
-        }
+      case GET -> Root / "login" =>
+        SeeOther.headers(Location(googleOIDC.authenticationUri))
 
-      case GET -> Root / "login" => SeeOther.headers(Location(googleOIDC.authenticationUri))
-
-      case GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
-        googleOIDC.authenticate(code).flatMap(user => Ok(user.toString))
+      case req @ GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
+        for {
+          user <- googleOIDC.authenticate[IO](code) >>= users.registerOrLogin
+          redirectTo = req.uri.withPath(Uri.Path.unsafeFromString("me"))
+          cookie = ResponseCookie("authcookie", "")
+          res <- SeeOther.headers(Location(redirectTo)).map(_.addCookie(cookie))
+        } yield res
 
       case GET -> Root / "healthz" =>
         Ok()
     }
   }
 
+
+  private def userRoutes: HttpRoutes[IO] = {
+    import org.http4s.dsl.io._
+
+    val auth = AuthMiddleware.withFallThrough(Kleisli(authUser))
+
+    val routes = AuthedRoutes.of[User, IO] {
+      case GET -> Root / "me" as user =>  Ok("Me")
+      case GET -> Root / "welcome" as user => Ok(s"Welcome, ${user.name}")
+      case GET -> Root / "logout" as user => ???
+    }
+
+    auth(routes)
+  }
+
+  private def websocketsRoutes(connect: IO[Connection[IO]]): HttpRoutes[IO] =
+    HttpRoutes.of {
+      case GET -> Root / "ws" =>
+        connect.flatMap {
+          case Connection(send, receive) =>
+            WebSocketBuilder[IO].build(
+              send.map(Text(_)),
+              _.collect { case Text(str, true) => str }.through(receive)
+            )
+        }
+    }
+
+  private def authUser(req: Request[IO]): OptionT[IO, User] = ???
+
+  def database(config: Config.Database): Resource[IO, HikariTransactor[IO]] =
+    for {
+      ce <- ExecutionContexts.fixedThreadPool[IO](32)
+      xa <- HikariTransactor.newHikariTransactor[IO](
+        "org.postgresql.Driver",
+        config.url,
+        config.username,
+        config.password,
+        ce
+      )
+    } yield xa
+
+
+  private def migrate(xa: HikariTransactor[IO]): IO[Unit] =
+    IO(org.flywaydb.core.Flyway.configure().dataSource(xa.kernel).load().migrate()).void
+
   def run(config: Config.Application): IO[ExitCode] =
     for {
+
       port <- Port()
 
       //      sends <- (config.kafka |> Kafka.send |> port.send).compile.drain.start
       //      receives <- (config.kafka |> Kafka.receive |> port.receive).compile.drain.start
 
+      db = database(config.database)
+
+      _ <- db.use(migrate)
+
       googleOIDC <- GoogleOIDC.fromConfig[IO](config.googleOpenidConnect)
+      routes = googleOCIDRoutes(googleOIDC, ???) <+> websocketsRoutes(port.connect) <+> userRoutes
+
       _ <- BlazeServerBuilder[IO](global)
         .bindHttp(config.http.webSocketPort, "0.0.0.0")
-        .withHttpApp(app[IO](port.connect, googleOIDC).orNotFound)
+        .withHttpApp(routes.orNotFound)
         .serve
         .compile
         .drain
@@ -79,6 +131,7 @@ object WebSocketServer extends IOApp {
   //    case object MustSelectTarget extends State
   //    case class WeHaveACompleteAction(action: CompleteAction) extends State
   //  }
+
 
   override def run(args: List[String]): IO[ExitCode] = Config.load[IO].flatMap(run)
 }

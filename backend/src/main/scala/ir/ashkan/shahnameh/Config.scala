@@ -15,7 +15,14 @@ object Config {
 
   case class GoogleOIDC(clientId: String, clientSecret: String, redirectUri: Uri, discoveryDocumentUri: Uri)
 
-  case class Application(kafka: Kafka, http: Http, googleOpenidConnect: GoogleOIDC)
+  case class Database(url: String, username: String, password: String, database: String)
+
+  case class Application(
+    database: Database,
+    kafka: Kafka,
+    http: Http,
+    googleOpenidConnect: GoogleOIDC
+  )
 
   implicit val uriReader: ConfigReader[Uri] = ConfigReader.fromStringTry(str => Try(Uri.unsafeParse(str)))
   def load[F[_]: Sync]: F[Application] = ConfigSource.default.loadF[F, Application]()
