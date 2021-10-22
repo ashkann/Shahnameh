@@ -30,16 +30,13 @@ object WebSocketServer extends IOApp {
       case GET -> Root / "login" =>
         SeeOther.headers(Location(googleOIDC.authenticationUri))
 
-      case req@GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
+      case req @ GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
         for {
           user <- googleOIDC.authenticate[IO](code) >>= users.findOrInsert
           redirectTo = req.uri.withPath(Uri.Path.unsafeFromString("me"))
           cookie = ResponseCookie("authcookie", user.email)
           res <- SeeOther.headers(Location(redirectTo)).map(_.addCookie(cookie))
         } yield res
-
-      case GET -> Root / "healthz" =>
-        Ok()
     }
   }
 
@@ -55,8 +52,9 @@ object WebSocketServer extends IOApp {
 
     val routes = AuthedRoutes.of[User, IO] {
       case GET -> Root / "me" as user => Ok(user.toString)
-      case GET -> Root / "welcome" as user => Ok(s"Welcome, ${user.name}")
-      case GET -> Root / "logout" as user => Ok(user.toString).map(_.removeCookie("authcookie"))
+      case req @ GET -> Root / "logout" as _ =>
+        val redirectTo = req.req.uri.withPath(Uri.Path.unsafeFromString("login"))
+        SeeOther.headers(Location(redirectTo)).map(_.removeCookie("authcookie"))
     }
 
     auth(routes)
@@ -94,12 +92,20 @@ object WebSocketServer extends IOApp {
 
   def run(config: Config.Application): IO[ExitCode] =
     for {
-      googleOIDC <- GoogleOIDC.fromConfig[IO](config.googleOpenidConnect)
       port <- Port()
+
+      googleOIDC <- GoogleOIDC.fromConfig[IO](config.googleOpenidConnect)
+
       _ <- database(config.database).use { db =>
-          val users = UserService.doobie[IO](db)
-          val r = googleOCIDRoutes(googleOIDC, users)
-          val routes = r <+> websocketsRoutes(port.connect) <+> userRoutes(users)
+        val users = UserService.doobie[IO](db)
+        val gRoutes = googleOCIDRoutes(googleOIDC, users)
+
+        val healths = HttpRoutes.of[IO] {
+          case GET -> Root / "healthz" =>
+            Ok()
+        }
+
+        val routes = gRoutes <+> websocketsRoutes(port.connect) <+> userRoutes(users) <+> healths
 
         migrate(db) *>
           BlazeServerBuilder[IO](global)
