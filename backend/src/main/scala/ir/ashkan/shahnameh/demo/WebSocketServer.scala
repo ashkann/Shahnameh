@@ -30,11 +30,11 @@ object WebSocketServer extends IOApp {
       case GET -> Root / "login" =>
         SeeOther.headers(Location(googleOIDC.authenticationUri))
 
-      case req @ GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
+      case req@GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
         for {
-          user <- googleOIDC.authenticate[IO](code) >>= users.registerOrLogin
+          user <- googleOIDC.authenticate[IO](code) >>= users.findOrInsert
           redirectTo = req.uri.withPath(Uri.Path.unsafeFromString("me"))
-          cookie = ResponseCookie("authcookie", "")
+          cookie = ResponseCookie("authcookie", user.email)
           res <- SeeOther.headers(Location(redirectTo)).map(_.addCookie(cookie))
         } yield res
 
@@ -44,15 +44,19 @@ object WebSocketServer extends IOApp {
   }
 
 
-  private def userRoutes: HttpRoutes[IO] = {
+  private def userRoutes(users: UserService[IO]): HttpRoutes[IO] = {
     import org.http4s.dsl.io._
+    import mouse.any._
+
+    def authUser(req: Request[IO]): OptionT[IO, User] =
+      req.cookies.find(_.name == "authcookie").map(_.content |> users.findUser).getOrElse(OptionT.none)
 
     val auth = AuthMiddleware.withFallThrough(Kleisli(authUser))
 
     val routes = AuthedRoutes.of[User, IO] {
-      case GET -> Root / "me" as user =>  Ok("Me")
+      case GET -> Root / "me" as user => Ok(user.toString)
       case GET -> Root / "welcome" as user => Ok(s"Welcome, ${user.name}")
-      case GET -> Root / "logout" as user => ???
+      case GET -> Root / "logout" as user => Ok(user.toString).map(_.removeCookie("authcookie"))
     }
 
     auth(routes)
@@ -70,7 +74,7 @@ object WebSocketServer extends IOApp {
         }
     }
 
-  private def authUser(req: Request[IO]): OptionT[IO, User] = ???
+
 
   def database(config: Config.Database): Resource[IO, HikariTransactor[IO]] =
     for {
@@ -90,25 +94,26 @@ object WebSocketServer extends IOApp {
 
   def run(config: Config.Application): IO[ExitCode] =
     for {
-
+      googleOIDC <- GoogleOIDC.fromConfig[IO](config.googleOpenidConnect)
       port <- Port()
+      _ <- database(config.database).use { db =>
+          val users = UserService.doobie[IO](db)
+          val r = googleOCIDRoutes(googleOIDC, users)
+          val routes = r <+> websocketsRoutes(port.connect) <+> userRoutes(users)
+
+        migrate(db) *>
+          BlazeServerBuilder[IO](global)
+            .bindHttp(config.http.webSocketPort, "0.0.0.0")
+            .withHttpApp(routes.orNotFound)
+            .serve
+            .compile
+            .drain
+        }
 
       //      sends <- (config.kafka |> Kafka.send |> port.send).compile.drain.start
       //      receives <- (config.kafka |> Kafka.receive |> port.receive).compile.drain.start
 
-      db = database(config.database)
 
-      _ <- db.use(migrate)
-
-      googleOIDC <- GoogleOIDC.fromConfig[IO](config.googleOpenidConnect)
-      routes = googleOCIDRoutes(googleOIDC, ???) <+> websocketsRoutes(port.connect) <+> userRoutes
-
-      _ <- BlazeServerBuilder[IO](global)
-        .bindHttp(config.http.webSocketPort, "0.0.0.0")
-        .withHttpApp(routes.orNotFound)
-        .serve
-        .compile
-        .drain
       //        .guarantee(sends.cancel)
       //        .guarantee(receives.cancel)
 

@@ -104,8 +104,8 @@ object GoogleOIDC {
 
   def fromConfig[F[_] : Async](config: Config.GoogleOIDC): F[GoogleOIDC] =
     AsyncHttpClientCatsBackend.resource().use { backend =>
-      val asDiscoverDoc = asString.getRight.map(decode[DiscoveryDocument]).getRight
-      val discoverDocReq = basicRequest.get(config.discoveryDocumentUri).response(asDiscoverDoc)
+      val asDiscoveryDoc = asString.getRight.map(decode[DiscoveryDocument]).getRight
+      val discoverDocReq = basicRequest.get(config.discoveryDocumentUri).response(asDiscoveryDoc)
 
       backend
         .send(discoverDocReq)
