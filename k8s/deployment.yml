@@ -59,21 +59,21 @@ spec:
                 configMapKeyRef:
                   name: shahnameh
                   key: db-url
-            - name: DB_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: postgres
-                  key: username
-            - name: DB_PASSWORD
-              valueFrom:
-                configMapKeyRef:
-                  name: postgres
-                  key: password
             - name: DB_DATABASE
               valueFrom:
                 configMapKeyRef:
                   name: shahnameh
                   key: db-database
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres
+                  key: password
 ---
 apiVersion: v1
 kind: Service
