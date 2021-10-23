@@ -62,13 +62,13 @@ spec:
             - name: DB_USERNAME
               valueFrom:
                 configMapKeyRef:
-                  name: shahnameh
-                  key: db-username
+                  name: postgres
+                  key: username
             - name: DB_PASSWORD
               valueFrom:
                 configMapKeyRef:
-                  name: shahnameh
-                  key: db-password
+                  name: postgres
+                  key: password
             - name: DB_DATABASE
               valueFrom:
                 configMapKeyRef:
