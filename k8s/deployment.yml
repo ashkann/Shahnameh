@@ -59,11 +59,6 @@ spec:
                 configMapKeyRef:
                   name: shahnameh
                   key: db-url
-            - name: DB_DATABASE
-              valueFrom:
-                configMapKeyRef:
-                  name: shahnameh
-                  key: db-database
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -168,5 +163,4 @@ metadata:
   name: shahnameh
 data:
   google-ocid-redirect-uri: "http://shahnameh.xyz/googleOpenIdConnect?"
-  db-url: ""
-  db-database: ""
+  db-url: "jdbc:postgresql://postgres:5432/shahnameh"

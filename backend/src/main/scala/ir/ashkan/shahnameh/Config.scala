@@ -15,7 +15,7 @@ object Config {
 
   case class GoogleOIDC(clientId: String, clientSecret: String, redirectUri: Uri, discoveryDocumentUri: Uri)
 
-  case class Database(url: String, username: String, password: String, database: String)
+  case class Database(url: String, username: String, password: String)
 
   case class Application(
     database: Database,
