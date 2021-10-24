@@ -130,7 +130,7 @@ spec:
       containers:
         - name: postgres
           image: postgres:13.4-alpine
-          args: ["-c listen_addresses = '*'"]
+          args: ["-c listen_addresses='*'"]
           ports:
             - containerPort: 4532
           env:
