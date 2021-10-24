@@ -155,7 +155,7 @@ spec:
     app: postgres
   ports:
     - protocol: TCP
-      port: 4532
+      port: 5432
       targetPort: 5432
 ---
 apiVersion: v1
