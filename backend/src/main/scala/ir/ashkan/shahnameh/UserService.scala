@@ -30,7 +30,7 @@ object UserService {
   def doobie[F[_] : MonadCancelThrow](xa: Transactor[F]): UserService[F] =
     new UserService[F] {
       def findUser(email: String): OptionT[F, User] =
-        OptionT(sql"SELECT * from google_ocid".query[User].option.transact(xa))
+        OptionT(sql"SELECT * from google_ocid where email=$email".query[User].option.transact(xa))
 
       def insertUser(user: User): F[Unit] =
         sql"INSERT INTO google_ocid(name,email,picture) values (${user.name},${user.email},${user.picture})"
