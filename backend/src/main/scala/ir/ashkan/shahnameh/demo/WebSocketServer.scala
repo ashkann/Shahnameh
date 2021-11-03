@@ -8,16 +8,13 @@ import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import ir.ashkan.shahnameh.{Config, Connection, GoogleOIDC, Port, UserService}
 import org.http4s.headers.Location
-import org.http4s.{AuthedRoutes, HttpRoutes, Request, ResponseCookie, Uri}
+import org.http4s.{AuthedRoutes, HttpApp, HttpRoutes, Request, ResponseCookie, Uri}
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.AuthMiddleware
 import org.http4s.server.websocket._
 import org.http4s.websocket.WebSocketFrame._
 import cats.syntax.semigroupk._
 import ir.ashkan.shahnameh.UserService.User
-
-import scala.concurrent.ExecutionContext.global
-
 
 object WebSocketServer extends IOApp {
   import org.http4s.dsl.io._
@@ -60,17 +57,17 @@ object WebSocketServer extends IOApp {
     auth(routes)
   }
 
-  private def websocketsRoutes(connect: IO[Connection[IO]]): HttpRoutes[IO] =
-    HttpRoutes.of {
+  private def websocketsRoutes(connect: IO[Connection[IO]])(builder: WebSocketBuilder2[IO]): HttpApp[IO] =
+    HttpRoutes.of[IO] {
       case GET -> Root / "ws" =>
         connect.flatMap {
           case Connection(send, receive) =>
-            WebSocketBuilder[IO].build(
+            builder.build(
               send.map(Text(_)),
               _.collect { case Text(str, true) => str }.through(receive)
             )
         }
-    }
+    }.orNotFound
 
 
 
@@ -105,11 +102,12 @@ object WebSocketServer extends IOApp {
             Ok()
         }
 
-        val routes = gRoutes <+> websocketsRoutes(port.connect) <+> userRoutes(users) <+> healths
+        val routes = gRoutes <+> userRoutes(users) <+> healths
 
         migrate(db) *>
-          BlazeServerBuilder[IO](global)
+          BlazeServerBuilder[IO]
             .bindHttp(config.http.webSocketPort, "0.0.0.0")
+            .withHttpWebSocketApp(websocketsRoutes(port.connect))
             .withHttpApp(routes.orNotFound)
             .serve
             .compile

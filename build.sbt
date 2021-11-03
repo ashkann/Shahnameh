@@ -13,9 +13,9 @@ scalacOptions in Global += "-Ymacro-annotations"
 val backendDependencies = {
   val catsEffectsVersion = "3.2.8"
   val catsVersion = "2.6.1"
-  val http4sVersion = "0.23.4"
+  val http4sVersion = "0.23.6"
   val circeVersion = "0.14.1"
-  val mouseVersion = "1.0.4"
+  val mouseVersion = "1.0.6"
   val sttpVersion = "3.3.15"
   val doobieVersion = "1.0.0-RC1"
 
@@ -50,7 +50,7 @@ val backendDependencies = {
     "dev.optics" %% "monocle-core" % "3.1.0",
     "dev.optics" %% "monocle-macro" % "3.1.0",
 
-    "co.fs2" %% "fs2-core" % "3.1.5",
+    "co.fs2" %% "fs2-core" % "3.1.6",
     "com.github.fd4s" %% "fs2-kafka" % "2.2.0",
     "org.apache.kafka" % "kafka-clients" % "2.8.0",
 
@@ -59,7 +59,7 @@ val backendDependencies = {
 
     "com.github.jwt-scala" %% "jwt-core" % "9.0.2",
 
-    "org.flywaydb" % "flyway-core" % "8.0.0",
+    "org.flywaydb" % "flyway-core" % "8.0.1",
   )
 }
 
@@ -81,14 +81,14 @@ val WebClient = (project in file("WebClient"))
     scalaVersion := "2.13.6",
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
-        "org.scala-js" %%% "scalajs-dom" % "1.1.0"
+        "org.scala-js" %%% "scalajs-dom" % "2.0.0"
     ),
 //    Compile / npmDependencies ++= Seq(
 //      "jquery" -> "3.6.0"
 //    )
   )
   .dependsOn(backend)
-  .enablePlugins(ScalaJSPlugin, ScalaJSBundlerPlugin)
+  .enablePlugins(ScalaJSPlugin)
 
 val Shahname = (project in file("."))
   .aggregate(backend, WebClient)

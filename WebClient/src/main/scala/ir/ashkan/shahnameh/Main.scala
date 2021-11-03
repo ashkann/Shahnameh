@@ -7,6 +7,7 @@ package ir.ashkan.shahnameh
 object Main {
 
   def main(args: Array[String]): Unit = {
+    println("Hello world!")
 //    document.addEventListener("DOMContentLoaded", { _ =>
 //      val socket = new WebSocket("ws://127.0.0.1:8080/ws")
 //      socket.onmessage = { e => println(e.data.toString) }
