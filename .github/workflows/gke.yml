@@ -3,8 +3,9 @@ name: Build docker image
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    paths-ignore:
+      - 'k8s/**'
+
 env:
   PROJECT_ID: shahname # not shahname*h*
   CLUSTER: shahnameh
@@ -34,4 +35,4 @@ jobs:
           location: ${{ env.ZONE }}
           credentials: ${{ secrets.GKE_SA_KEY }}
           project_id: ${{ env.PROJECT_ID }}
-      - run: kubectl apply -f ${{ github.workspace }}/k8s/deployment.yml
+      - run: kubectl apply -f ${{ github.workspace }}/k8s

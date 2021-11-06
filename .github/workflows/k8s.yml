@@ -1,0 +1,25 @@
+name: Build docker image
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'k8s/**'
+
+env:
+  PROJECT_ID: shahname # not shahname*h*
+  CLUSTER: shahnameh
+  ZONE: us-central1-c
+  IMAGE: ghcr.io/ashkann/shahnameh-backend
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: google-github-actions/get-gke-credentials@main
+      with:
+        cluster_name: ${{ env.CLUSTER }}
+        location: ${{ env.ZONE }}
+        credentials: ${{ secrets.GKE_SA_KEY }}
+        project_id: ${{ env.PROJECT_ID }}
+    - run: kubectl apply -f ${{ github.workspace }}/k8s/deployment.yml

@@ -8,13 +8,14 @@ import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import ir.ashkan.shahnameh.{Config, Connection, GoogleOIDC, Port, UserService}
 import org.http4s.headers.Location
-import org.http4s.{AuthedRoutes, HttpApp, HttpRoutes, Request, ResponseCookie, Uri}
+import org.http4s.{AuthedRoutes, HttpApp, HttpRoutes, Request, ResponseCookie, StaticFile, Uri}
 import org.http4s.blaze.server.BlazeServerBuilder
-import org.http4s.server.AuthMiddleware
+import org.http4s.server.{AuthMiddleware, Router}
 import org.http4s.server.websocket._
 import org.http4s.websocket.WebSocketFrame._
 import cats.syntax.semigroupk._
 import ir.ashkan.shahnameh.UserService.User
+import org.http4s.server.staticcontent.resourceServiceBuilder
 
 object WebSocketServer extends IOApp {
   import org.http4s.dsl.io._
@@ -36,7 +37,6 @@ object WebSocketServer extends IOApp {
         } yield res
     }
   }
-
 
   private def userRoutes(users: UserService[IO]): HttpRoutes[IO] = {
     import org.http4s.dsl.io._
@@ -98,11 +98,16 @@ object WebSocketServer extends IOApp {
         val gRoutes = googleOCIDRoutes(googleOIDC, users)
 
         val healths = HttpRoutes.of[IO] {
-          case GET -> Root / "healthz" =>
-            Ok()
+          case GET -> Root / "healthz" => Ok()
         }
 
-        val routes = gRoutes <+> userRoutes(users) <+> healths
+        val index = HttpRoutes.of[IO] {
+          case req @ GET -> Root => StaticFile.fromResource[IO]("index.html" , Some(req)).getOrElseF(NotFound())
+        }
+
+        val assets = Router[IO]("assets" -> resourceServiceBuilder("assets").toRoutes)
+
+        val routes = gRoutes <+> userRoutes(users) <+> healths <+> assets <+> index
 
         migrate(db) *>
           BlazeServerBuilder[IO]
