@@ -1,6 +1,7 @@
 name: k8s
 
 on:
+  workflow_call
   push:
     branches: [ master ]
     paths:
