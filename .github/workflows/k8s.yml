@@ -13,7 +13,7 @@ env:
   IMAGE: ghcr.io/ashkann/shahnameh-backend
 
 jobs:
-  build:
+  deploy-to-k8s:
     runs-on: ubuntu-latest
     steps:
     - uses: google-github-actions/get-gke-credentials@main
