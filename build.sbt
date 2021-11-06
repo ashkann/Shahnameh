@@ -98,6 +98,7 @@ lazy val Shahnameh =
     .jsSettings(libraryDependencies ++= Seq("org.scala-js" %%% "scalajs-dom" % "2.0.0"))
     .jvmSettings(
       libraryDependencies ++= jvmDeps,
+      Compile / mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer"),
       assembly / assemblyMergeStrategy := {
         case PathList("META-INF", _) => MergeStrategy.discard
         case other => (assembly / assemblyMergeStrategy).value(other)
