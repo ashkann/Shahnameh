@@ -32,6 +32,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: docker push ${{ env.IMAGE }}
+      - run: docker push ${{ env.ASSETS_IMAGE }}
       - uses: google-github-actions/get-gke-credentials@main
         with:
           cluster_name: ${{ env.CLUSTER }}
