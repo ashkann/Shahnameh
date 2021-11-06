@@ -22,4 +22,4 @@ jobs:
         location: ${{ env.ZONE }}
         credentials: ${{ secrets.GKE_SA_KEY }}
         project_id: ${{ env.PROJECT_ID }}
-    - run: kubectl apply -f ${{ github.workspace }}/k8s/deployment.yml
+    - run: kubectl apply -f ${{ github.workspace }}/k8s
