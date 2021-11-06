@@ -96,4 +96,10 @@ lazy val Shahnameh =
     .in(file("."))
     .settings(sharedSettings)
     .jsSettings(libraryDependencies ++= Seq("org.scala-js" %%% "scalajs-dom" % "2.0.0"))
-    .jvmSettings(libraryDependencies ++= jvmDeps)
+    .jvmSettings(
+      libraryDependencies ++= jvmDeps,
+      assembly / assemblyMergeStrategy := {
+        case PathList("META-INF", _) => MergeStrategy.discard
+        case other => (assembly / assemblyMergeStrategy).value(other)
+      }
+    )
