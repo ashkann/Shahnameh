@@ -2,6 +2,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: shahnameh
 spec:
   rules:
     - http:
