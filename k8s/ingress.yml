@@ -6,13 +6,13 @@ spec:
   rules:
     - http:
         paths:
-          - path: /
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: assets
-                port:
-                  number: 80
+#          - path: /
+#            pathType: ImplementationSpecific
+#            backend:
+#              service:
+#                name: assets
+#                port:
+#                  number: 80
           - path: /assets/*
             pathType: ImplementationSpecific
             backend:
