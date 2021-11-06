@@ -10,7 +10,8 @@ env:
   PROJECT_ID: shahname # not shahname*h*
   CLUSTER: shahnameh
   ZONE: us-central1-c
-  IMAGE: ghcr.io/ashkann/shahnameh-backend
+  IMAGE: ghcr.io/ashkann/shahnameh/backend
+  ASSETS_IMAGE: ghcr.io/ashkann/shahnameh/assets
 
 jobs:
   build:
@@ -22,7 +23,9 @@ jobs:
           java-version: '8'
           distribution: 'adopt'
       - run: sbt ShahnamehJVM/assembly
-      - run: docker build -t ${{ env.IMAGE }} .
+      - run: docker build -f Dockerfile.backend -t ${{ env.IMAGE }} .
+      - run: sbt ShahnamehJS/fastLinkJS
+      - run: docker build -f Dockerfile.assets -t ${{ env.ASSETS_IMAGE }} .
       - uses: docker/login-action@v1
         with:
           registry: ghcr.io

@@ -102,7 +102,7 @@ object WebSocketServer extends IOApp {
         }
 
         val index = HttpRoutes.of[IO] {
-          case req @ GET -> Root => StaticFile.fromResource[IO]("index.html" , Some(req)).getOrElseF(NotFound())
+          case req @ GET -> Root => StaticFile.fromResource[IO]("index.html", Some(req)).getOrElseF(NotFound())
         }
 
         val assets = Router[IO]("assets" -> resourceServiceBuilder("assets").toRoutes)
