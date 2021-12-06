@@ -7,7 +7,7 @@ import doobie.{Get, Put, Transactor}
 import cats.syntax.all._
 import doobie.implicits._
 import Sessions.SessionId
-import simulacrum.typeclass
+import simulacrum._
 
 @typeclass
 trait Users[F[_]] {

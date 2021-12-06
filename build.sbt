@@ -1,5 +1,5 @@
 val sharedSettings = Seq(
-  scalaVersion := "2.13.5",
+  scalaVersion := "2.13.6",
   scalacOptions += "-Ymacro-annotations",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),

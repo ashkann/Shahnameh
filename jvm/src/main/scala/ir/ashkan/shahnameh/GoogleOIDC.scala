@@ -7,7 +7,7 @@ import cats.syntax.flatMap._
 import cats.syntax.functor._
 import org.http4s
 import org.http4s.headers.Location
-import org.http4s.{Response, Uri}
+import org.http4s.{Response, Uri => Http4sUri}
 
 import java.math.BigInteger
 import java.security.SecureRandom
@@ -29,7 +29,7 @@ import scala.util.Try
 //import java.security.spec.RSAPublicKeySpec
 //import java.security.{KeyFactory, PublicKey}
 
-class GoogleOIDC(tokenUri: SttpUri, authUri: Uri, config: Config.GoogleOIDC) {
+class GoogleOIDC(tokenUri: SttpUri, authUri: Http4sUri, config: Config.GoogleOIDC) {
   import GoogleOIDC._
 
   def authenticationUri: http4s.Uri = {
@@ -104,11 +104,12 @@ object GoogleOIDC {
   private final case class Key(alg: String, kid: String, n: String, e: String)
   private final case class Certs(keys: List[Key])
   private final case class IdToken(id_token: String)
-  private final case class DiscoveryDocument(token_endpoint: SttpUri, authorization_endpoint: Uri)
+  private final case class DiscoveryDocument(token_endpoint: SttpUri, authorization_endpoint: Http4sUri)
 
   final case class User(name: String, email: String, picture: String, email_verified: Boolean)
 
-  implicit val uriDecoder: Decoder[SttpUri] = Decoder.decodeString.emapTry(str => Try(SttpUri.unsafeParse(str)))
+  implicit val sttpUriDec: Decoder[SttpUri] = Decoder.decodeString.emapTry(str => Try(SttpUri.unsafeParse(str)))
+  implicit val http4sUriDec: Decoder[Http4sUri] = ???
 
   def fromConfig[F[_] : Async](config: Config.GoogleOIDC): F[GoogleOIDC] =
     AsyncHttpClientCatsBackend.resource().use { backend =>

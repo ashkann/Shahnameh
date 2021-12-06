@@ -7,8 +7,6 @@ import cats.effect.std.Console
 import cats.syntax.all._
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import ir.ashkan.shahnameh.GoogleOIDC.User
-import ir.ashkan.shahnameh.Users.User
 import mouse.any._
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.dsl.{Http4sDsl => Dsl}
@@ -54,7 +52,7 @@ object Server extends IOApp {
         for {
           _ <- Users[F].logout(user.id)
           login = req.req.uri.withPath(Uri.Path.unsafeFromString("login"))
-          res = SeeOther.headers(Location(login)).map(Sessions[F].remove)
+          res <- SeeOther.headers(Location(login)).map(Sessions[F].remove)
         } yield res
     }
   }
@@ -101,7 +99,7 @@ object Server extends IOApp {
 
       gRoutes = googleOCIDRoutes[F](googleOIDC)(dsl)
 
-      auth = Kleisli(Auth.fromCookie[F].auth) |> AuthMiddleware.withFallThrough
+      auth = AuthMiddleware.withFallThrough(Kleisli(Auth.fromCookie.auth))
 
       routes = gRoutes <+> auth(userRoutes(dsl)) <+> healthzRoute(dsl)
       wsRoute = (b: WebSocketBuilder2[F]) => auth(websocketsRoutes(port.connect, b, dsl))

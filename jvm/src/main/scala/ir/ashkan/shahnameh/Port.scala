@@ -7,7 +7,7 @@ import Connection._
 import cats.{Applicative, FlatMap}
 import cats.syntax.all._
 
-class Port[F[_] :Concurrent :FlatMap](
+class Port[F[_] :Concurrent](
   connections: Ref[F, Map[ConnectionId, Topic[F, String]]],
   genId: F[ConnectionId],
   incomingTopic: Topic[F, Incoming]
@@ -29,7 +29,7 @@ class Port[F[_] :Concurrent :FlatMap](
 }
 
 object Port {
-  def apply[F[_] :Concurrent :FlatMap]: F[Port[F]] =
+  def apply[F[_] :Concurrent]: F[Port[F]] =
     for {
       incomingTopic <- Topic[F, Incoming]
       connections <- Ref[F].of(Map.empty[ConnectionId, Topic[F, String]])

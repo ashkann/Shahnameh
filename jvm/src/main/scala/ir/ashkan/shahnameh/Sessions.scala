@@ -10,7 +10,7 @@ import scala.util.Try
 @typeclass
 trait Sessions[F[_]] {
 
-  import Sessions._
+  import Sessions.SessionId
 
   def read(in: Request[F]): Option[SessionId]
 
