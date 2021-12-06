@@ -1,39 +1,45 @@
 val sharedSettings = Seq(
-  scalaVersion := "2.13.6",
+  scalaVersion := "2.13.5",
   scalacOptions += "-Ymacro-annotations",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
+
 )
 
 val jvmDeps = {
-  val catsEffectsVersion = "3.2.8"
-  val catsVersion = "2.6.1"
-  val http4sVersion = "0.23.6"
-  val circeVersion = "0.14.1"
-  val mouseVersion = "1.0.6"
-  val sttpVersion = "3.3.15"
-  val doobieVersion = "1.0.0-RC1"
+  object Version {
+    val catsEffects = "3.2.8"
+    val cats = "2.6.1"
+    val http4s = "0.23.6"
+    val circe = "0.14.1"
+    val mouse = "1.0.7"
+    val sttp = "3.3.16"
+    val doobie = "1.0.0-RC1"
+    val simulacrum = "1.0.1"
+  }
 
   Seq(
-    "org.typelevel" %% "cats-core" % catsVersion,
-    "org.typelevel" %% "cats-free" % catsVersion,
-    "org.typelevel" %% "alleycats-core" % catsVersion,
+    "org.typelevel" %% "cats-core" % Version.cats,
+    "org.typelevel" %% "cats-laws" % "2.6.1" % Test,
+    "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % Test,
+    "org.typelevel" %% "cats-free" % Version.cats,
+    "org.typelevel" %% "alleycats-core" % Version.cats,
+    "org.typelevel" %% "mouse" % Version.mouse,
+    "org.typelevel" %% "cats-effect" % Version.catsEffects,
+    "org.typelevel" %% "cats-effect-laws" % "3.3-393-da7c7c7" % Test,
+    "org.typelevel" %% "simulacrum" % Version.simulacrum,
 
-    "org.typelevel" %% "mouse" % mouseVersion,
+    "org.tpolecat" %% "doobie-core"      % Version.doobie,
+    "org.tpolecat" %% "doobie-hikari"    % Version.doobie,
+    "org.tpolecat" %% "doobie-postgres"  % Version.doobie,
 
-    "org.typelevel" %% "cats-effect" % catsEffectsVersion,
+    "io.circe" %% "circe-core" % Version.circe,
+    "io.circe" %% "circe-generic" % Version.circe,
+    "io.circe" %% "circe-parser" % Version.circe,
 
-    "org.tpolecat" %% "doobie-core"      % doobieVersion,
-    "org.tpolecat" %% "doobie-hikari"    % doobieVersion,
-    "org.tpolecat" %% "doobie-postgres"  % doobieVersion,
-
-    "io.circe" %% "circe-core" % circeVersion,
-    "io.circe" %% "circe-generic" % circeVersion,
-    "io.circe" %% "circe-parser" % circeVersion,
-
-    "org.http4s" %% "http4s-blaze-server" % http4sVersion,
-    "org.http4s" %% "http4s-circe" % http4sVersion,
-    "org.http4s" %% "http4s-dsl" % http4sVersion,
+    "org.http4s" %% "http4s-blaze-server" % Version.http4s,
+    "org.http4s" %% "http4s-circe" % Version.http4s,
+    "org.http4s" %% "http4s-dsl" % Version.http4s,
 
     "com.github.pureconfig" %% "pureconfig" % "0.17.0",
     "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.17.0",
@@ -49,46 +55,14 @@ val jvmDeps = {
     "com.github.fd4s" %% "fs2-kafka" % "2.2.0",
     "org.apache.kafka" % "kafka-clients" % "2.8.0",
 
-    "com.softwaremill.sttp.client3" %% "core" % sttpVersion,
-    "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % sttpVersion,
+    "com.softwaremill.sttp.client3" %% "core" % Version.sttp,
+    "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % Version.sttp,
 
     "com.github.jwt-scala" %% "jwt-core" % "9.0.2",
 
-    "org.flywaydb" % "flyway-core" % "8.0.1"
+    "org.flywaydb" % "flyway-core" % "8.0.2"
   )
 }
-
-val jsDeps = {
-  Seq()
-}
-
-//val backend = (project in file("backend"))
-//  .settings(
-//    scalaVersion := "2.13.6",
-//    libraryDependencies := backendDependencies,
-//
-//    Compile / mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer"),
-//    assembly / assemblyMergeStrategy := {
-//      case PathList("META-INF", _) => MergeStrategy.discard
-//      case other => (assembly / assemblyMergeStrategy).value(other)
-//    }
-//  )
-
-//val WebClient = (project in file("WebClient"))
-//  .settings(
-//    scalaVersion := "2.13.6",
-//    scalaJSUseMainModuleInitializer := true,
-//    libraryDependencies ++= Seq(
-//    ),
-////    Compile / npmDependencies ++= Seq(
-////      "jquery" -> "3.6.0"
-////    )
-//  )
-//  .dependsOn(backend)
-//  .enablePlugins(ScalaJSPlugin)
-//
-//val Shahname = (project in file("."))
-//  .aggregate(backend, WebClient)
 
 lazy val Shahnameh =
   crossProject(JSPlatform, JVMPlatform)
@@ -98,7 +72,7 @@ lazy val Shahnameh =
     .jsSettings(libraryDependencies ++= Seq("org.scala-js" %%% "scalajs-dom" % "2.0.0"))
     .jvmSettings(
       libraryDependencies ++= jvmDeps,
-      Compile / mainClass := Some("ir.ashkan.shahnameh.demo.WebSocketServer"),
+      Compile / mainClass := Some("ir.ashkan.shahnameh.Server"),
       assembly / assemblyMergeStrategy := {
         case PathList("META-INF", _) => MergeStrategy.discard
         case other => (assembly / assemblyMergeStrategy).value(other)

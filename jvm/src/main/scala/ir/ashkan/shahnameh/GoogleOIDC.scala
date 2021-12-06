@@ -1,10 +1,13 @@
 package ir.ashkan.shahnameh
 
+import cats.Applicative
 import cats.effect.Async
 import cats.syntax.either._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import org.http4s
+import org.http4s.headers.Location
+import org.http4s.{Response, Uri}
 
 import java.math.BigInteger
 import java.security.SecureRandom
@@ -14,10 +17,11 @@ import io.circe.Decoder
 import io.circe.generic.auto._
 import io.circe.parser.decode
 //import ir.ashkan.shahnameh.Config.GoogleOIDC
+import org.http4s.dsl.{Http4sDsl => Dsl}
 import pdi.jwt.{Jwt, JwtOptions}
 import sttp.client3.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import sttp.client3.{SttpBackend, UriContext, asString, basicRequest}
-import sttp.model.Uri
+import sttp.model.{Uri => SttpUri}
 
 import scala.util.Try
 
@@ -25,8 +29,7 @@ import scala.util.Try
 //import java.security.spec.RSAPublicKeySpec
 //import java.security.{KeyFactory, PublicKey}
 
-class GoogleOIDC(tokenUri: Uri, authUri: Uri, config: Config.GoogleOIDC) {
-
+class GoogleOIDC(tokenUri: SttpUri, authUri: Uri, config: Config.GoogleOIDC) {
   import GoogleOIDC._
 
   def authenticationUri: http4s.Uri = {
@@ -42,7 +45,7 @@ class GoogleOIDC(tokenUri: Uri, authUri: Uri, config: Config.GoogleOIDC) {
     org.http4s.Uri.unsafeFromString(authUri.toString()).withQueryParams(params)
   }
 
-  def authenticate[F[_] : Async](code: String): F[User] = {
+  def authenticate[F[_] : Async](code: String, state: String): F[User] = {
     for {
       backend <- AsyncHttpClientCatsBackend[F]()
       params = Map(
@@ -90,25 +93,30 @@ class GoogleOIDC(tokenUri: Uri, authUri: Uri, config: Config.GoogleOIDC) {
       cert <- decode[Certs](response.body).liftTo
     } yield cert
   }
+
+  def loginRoute[F[_]: Applicative](dsl: Dsl[F]): F[Response[F]] = {
+    import dsl._
+    SeeOther.headers(Location(authenticationUri))
+  }
 }
 
 object GoogleOIDC {
   private final case class Key(alg: String, kid: String, n: String, e: String)
   private final case class Certs(keys: List[Key])
   private final case class IdToken(id_token: String)
-  private final case class DiscoveryDocument(token_endpoint: Uri, authorization_endpoint: Uri)
+  private final case class DiscoveryDocument(token_endpoint: SttpUri, authorization_endpoint: Uri)
 
   final case class User(name: String, email: String, picture: String, email_verified: Boolean)
 
-  implicit val uriDecoder: Decoder[Uri] = Decoder.decodeString.emapTry(str => Try(Uri.unsafeParse(str)))
+  implicit val uriDecoder: Decoder[SttpUri] = Decoder.decodeString.emapTry(str => Try(SttpUri.unsafeParse(str)))
 
   def fromConfig[F[_] : Async](config: Config.GoogleOIDC): F[GoogleOIDC] =
     AsyncHttpClientCatsBackend.resource().use { backend =>
       val asDiscoveryDoc = asString.getRight.map(decode[DiscoveryDocument]).getRight
-      val discoverDocReq = basicRequest.get(config.discoveryDocumentUri).response(asDiscoveryDoc)
+      val getDiscoveryDoc = basicRequest.get(config.discoveryDocumentUri).response(asDiscoveryDoc)
 
       backend
-        .send(discoverDocReq)
+        .send(getDiscoveryDoc)
         .map(_.body match {
           case DiscoveryDocument(tokenUri, authUri) => new GoogleOIDC(tokenUri, authUri, config)
         })

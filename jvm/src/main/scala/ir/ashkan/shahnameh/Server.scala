@@ -1,63 +1,70 @@
-package ir.ashkan.shahnameh.demo
+package ir.ashkan.shahnameh
 
-import cats.data.{Kleisli, OptionT}
+import cats.Monad
+import cats.data.Kleisli
 import cats.effect._
 import cats.effect.std.Console
-import cats.syntax.flatMap._
+import cats.syntax.all._
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import ir.ashkan.shahnameh.{Config, Connection, GoogleOIDC, Port, UserService}
-import org.http4s.headers.Location
-import org.http4s.{AuthedRoutes, HttpApp, HttpRoutes, Request, Response, ResponseCookie, StaticFile, Uri}
+import ir.ashkan.shahnameh.GoogleOIDC.User
+import ir.ashkan.shahnameh.Users.User
+import mouse.any._
 import org.http4s.blaze.server.BlazeServerBuilder
-import org.http4s.server.{AuthMiddleware, Router}
+import org.http4s.dsl.{Http4sDsl => Dsl}
+import org.http4s.headers.Location
+import org.http4s.server.AuthMiddleware
 import org.http4s.server.websocket._
 import org.http4s.websocket.WebSocketFrame._
-import cats.syntax.semigroupk._
-import ir.ashkan.shahnameh.UserService.User
-import org.http4s.server.staticcontent.resourceServiceBuilder
+import org.http4s.{AuthedRoutes, HttpRoutes, Uri}
 
-object WebSocketServer extends IOApp {
-  import org.http4s.dsl.io._
+object Server extends IOApp {
 
-  private def googleOCIDRoutes(googleOIDC: GoogleOIDC, users: UserService[IO]): HttpRoutes[IO] = {
+  def googleOCIDRoutes[F[_] :Async :Users :Sessions](googleOIDC: GoogleOIDC)(dsl: Dsl[F]): HttpRoutes[F] = {
+    import dsl._
+
+    def login(user: GoogleOIDC.User) =
+      for {
+        usr <- Users[F].findOrInsert(user)
+        sessionId = Sessions.generateId
+        _ <- Users[F].login(usr.id, sessionId)
+      } yield sessionId
+
     object StateParam extends QueryParamDecoderMatcher[String]("state")
     object CodeParam extends QueryParamDecoderMatcher[String]("code")
 
-    HttpRoutes.of {
-      case GET -> Root / "login" =>
-        SeeOther.headers(Location(googleOIDC.authenticationUri))
+    HttpRoutes.of[F] {
+      case GET -> Root / "login" => googleOIDC.loginRoute(dsl)
 
-      case req @ GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
+      case req @ GET -> Root / "googleOpenIdConnect" :? StateParam(state) +& CodeParam(code) =>
         for {
-          user <- googleOIDC.authenticate[IO](code) >>= users.findOrInsert
+          gUser <- googleOIDC.authenticate(code, state)
+          sessionId <- login(gUser)
           index = req.uri.withPath(Uri.Path.unsafeFromString("/"))
-          sessionId <- users.login(user.id)
-          cookie = ResponseCookie("sessionId", sessionId.toString)
-          res <- SeeOther.headers(Location(index)).map(_.addCookie(cookie))
+          res <- SeeOther.headers(Location(index)).map(Sessions[F].write(_, sessionId))
         } yield res
     }
   }
 
-  def auth(users: UserService[IO]): AuthMiddleware[IO, User] = {
-    import mouse.any._
+  def userRoutes[F[_] :Monad :Users :Sessions](dsl: Dsl[F]): AuthedRoutes[Users.User, F] = {
+    import dsl._
 
-    def authUser(req: Request[IO]): OptionT[IO, User] =
-      req.cookies.find(_.name == "sessionId").map(_.content |> users.findUser).getOrElse(OptionT.none)
-
-    AuthMiddleware.withFallThrough(Kleisli(authUser))
+    AuthedRoutes.of[Users.User, F] {
+      case req @ GET -> Root / "logout" as user =>
+        for {
+          _ <- Users[F].logout(user.id)
+          login = req.req.uri.withPath(Uri.Path.unsafeFromString("login"))
+          res = SeeOther.headers(Location(login)).map(Sessions[F].remove)
+        } yield res
+    }
   }
 
-  private def userRoutes(users: UserService[IO]): AuthedRoutes[User, IO] =
-    AuthedRoutes.of[User, IO] {
-      case req @ GET -> Root / "logout" as user =>
-        val login = req.req.uri.withPath(Uri.Path.unsafeFromString("login"))
-        users.logout(user.id) *> SeeOther.headers(Location(login))
-    }
+  def websocketsRoutes[F[_] : Monad](connect: F[Connection[F]], builder: WebSocketBuilder2[F], dsl: Dsl[F])
+  : AuthedRoutes[Users.User, F] = {
+    import dsl._
 
-  private def websocketsRoutes(connect: IO[Connection[IO]], builder: WebSocketBuilder2[IO]): AuthedRoutes[User, IO] =
-    AuthedRoutes.of[User, IO] {
-      case GET -> Root / "ws" as user =>
+    AuthedRoutes.of[Users.User, F] {
+      case GET -> Root / "ws" as _ =>
         connect.flatMap {
           case Connection(send, receive) =>
             builder.build(
@@ -66,11 +73,12 @@ object WebSocketServer extends IOApp {
             )
         }
     }
+  }
 
-  def database(config: Config.Database): Resource[IO, HikariTransactor[IO]] =
+  def database[F[_] : Async](config: Config.Database): Resource[F, HikariTransactor[F]] =
     for {
-      ce <- ExecutionContexts.fixedThreadPool[IO](32)
-      xa <- HikariTransactor.newHikariTransactor[IO](
+      ce <- ExecutionContexts.fixedThreadPool[F](32)
+      xa <- HikariTransactor.newHikariTransactor[F](
         "org.postgresql.Driver",
         config.url,
         config.username,
@@ -79,43 +87,32 @@ object WebSocketServer extends IOApp {
       )
     } yield xa
 
+  def healthzRoute[F[_] : Monad](dsl: Dsl[F]): HttpRoutes[F] = {
+    import dsl._
+    HttpRoutes.of[F] { case GET -> Root / "healthz" => Ok() }
+  }
 
-  private def migrate(xa: HikariTransactor[IO]): IO[Unit] =
-    IO(org.flywaydb.core.Flyway.configure().dataSource(xa.kernel).load().migrate()).void
-
-  def run(config: Config.Application): IO[ExitCode] =
+  def run[F[_] :Async :Sessions :Users :Console](config: Config.Application): F[Unit] =
     for {
-      port <- Port()
+      port <- Port[F]
+      dsl = Dsl[F]
 
-      googleOIDC <- GoogleOIDC.fromConfig[IO](config.googleOpenidConnect)
+      googleOIDC <- GoogleOIDC.fromConfig[F](config.googleOpenidConnect)
 
-      _ <- database(config.database).use { db =>
-        val users = UserService.doobie[IO](db)
-        val gRoutes = googleOCIDRoutes(googleOIDC, users)
+      gRoutes = googleOCIDRoutes[F](googleOIDC)(dsl)
 
-        val healths = HttpRoutes.of[IO] {
-          case GET -> Root / "healthz" => Ok()
-        }
+      auth = Kleisli(Auth.fromCookie[F].auth) |> AuthMiddleware.withFallThrough
 
-        val index = HttpRoutes.of[IO] {
-          case req @ GET -> Root => StaticFile.fromResource[IO]("index.html", Some(req)).getOrElseF(NotFound())
-        }
+      routes = gRoutes <+> auth(userRoutes(dsl)) <+> healthzRoute(dsl)
+      wsRoute = (b: WebSocketBuilder2[F]) => auth(websocketsRoutes(port.connect, b, dsl))
 
-        val assets = Router[IO]("assets" -> resourceServiceBuilder("assets").toRoutes)
-
-        val routes = gRoutes <+> auth(users)(userRoutes) <+> healths <+> assets <+> index
-        val wsRoute = (b: WebSocketBuilder2[IO]) => auth(users)(websocketsRoutes(port.connect, b))
-
-        migrate(db) *>
-          BlazeServerBuilder[IO]
-            .bindHttp(config.http.webSocketPort, "0.0.0.0")
-            .withHttpWebSocketApp(wsRoute(_).orNotFound)
-            .withHttpApp(routes.orNotFound)
-            .serve
-            .compile
-            .drain
-        }
-
+      _ <- BlazeServerBuilder[F]
+        .bindHttp(config.http.webSocketPort, "0.0.0.0")
+        .withHttpWebSocketApp(wsRoute(_).orNotFound)
+        .withHttpApp(routes.orNotFound)
+        .serve
+        .compile
+        .drain
       //      sends <- (config.kafka |> Kafka.send |> port.send).compile.drain.start
       //      receives <- (config.kafka |> Kafka.receive |> port.receive).compile.drain.start
 
@@ -123,8 +120,8 @@ object WebSocketServer extends IOApp {
       //        .guarantee(sends.cancel)
       //        .guarantee(receives.cancel)
 
-      _ <- Console[IO].println("Terminated")
-    } yield ExitCode.Success
+      _ <- Console[F].println("Terminated")
+    } yield ()
   //  sealed trait State
   //  object State {
   //    type Character = Nothing
@@ -143,6 +140,16 @@ object WebSocketServer extends IOApp {
   //    case class WeHaveACompleteAction(action: CompleteAction) extends State
   //  }
 
+  //         val users = Users.doobie[F](db)
 
-  override def run(args: List[String]): IO[ExitCode] = Config.load[IO].flatMap(run)
+  override def run(args: List[String]): IO[ExitCode] =
+    for {
+      config <- Config.load[IO]
+      _ <- database[IO](config.database).use { db =>
+        implicit val sessions = Sessions.http4s[IO]
+        implicit val users = Users.doobie[IO](db)
+
+        run[IO](config)
+      }
+    } yield ExitCode.Success
 }
