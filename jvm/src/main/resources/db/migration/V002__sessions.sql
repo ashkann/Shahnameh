@@ -1,0 +1,1 @@
+ALTER TABLE google_ocid ADD COLUMN session_id UUID UNIQUE

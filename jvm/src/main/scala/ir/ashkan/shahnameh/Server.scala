@@ -8,7 +8,7 @@ import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import ir.ashkan.shahnameh.{Config, Connection, GoogleOIDC, Port, UserService}
 import org.http4s.headers.Location
-import org.http4s.{AuthedRoutes, HttpApp, HttpRoutes, Request, ResponseCookie, StaticFile, Uri}
+import org.http4s.{AuthedRoutes, HttpApp, HttpRoutes, Request, Response, ResponseCookie, StaticFile, Uri}
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.{AuthMiddleware, Router}
 import org.http4s.server.websocket._
@@ -31,35 +31,33 @@ object WebSocketServer extends IOApp {
       case req @ GET -> Root / "googleOpenIdConnect" :? StateParam(_) +& CodeParam(code) =>
         for {
           user <- googleOIDC.authenticate[IO](code) >>= users.findOrInsert
-          redirectTo = req.uri.withPath(Uri.Path.unsafeFromString("me"))
-          cookie = ResponseCookie("authcookie", user.email)
-          res <- SeeOther.headers(Location(redirectTo)).map(_.addCookie(cookie))
+          index = req.uri.withPath(Uri.Path.unsafeFromString("/"))
+          sessionId <- users.login(user.id)
+          cookie = ResponseCookie("sessionId", sessionId.toString)
+          res <- SeeOther.headers(Location(index)).map(_.addCookie(cookie))
         } yield res
     }
   }
 
-  private def userRoutes(users: UserService[IO]): HttpRoutes[IO] = {
-    import org.http4s.dsl.io._
+  def auth(users: UserService[IO]): AuthMiddleware[IO, User] = {
     import mouse.any._
 
     def authUser(req: Request[IO]): OptionT[IO, User] =
-      req.cookies.find(_.name == "authcookie").map(_.content |> users.findUser).getOrElse(OptionT.none)
+      req.cookies.find(_.name == "sessionId").map(_.content |> users.findUser).getOrElse(OptionT.none)
 
-    val auth = AuthMiddleware.withFallThrough(Kleisli(authUser))
-
-    val routes = AuthedRoutes.of[User, IO] {
-      case GET -> Root / "me" as user => Ok(user.toString)
-      case req @ GET -> Root / "logout" as _ =>
-        val redirectTo = req.req.uri.withPath(Uri.Path.unsafeFromString("login"))
-        SeeOther.headers(Location(redirectTo)).map(_.removeCookie("authcookie"))
-    }
-
-    auth(routes)
+    AuthMiddleware.withFallThrough(Kleisli(authUser))
   }
 
-  private def websocketsRoutes(connect: IO[Connection[IO]])(builder: WebSocketBuilder2[IO]): HttpApp[IO] =
-    HttpRoutes.of[IO] {
-      case GET -> Root / "ws" =>
+  private def userRoutes(users: UserService[IO]): AuthedRoutes[User, IO] =
+    AuthedRoutes.of[User, IO] {
+      case req @ GET -> Root / "logout" as user =>
+        val login = req.req.uri.withPath(Uri.Path.unsafeFromString("login"))
+        users.logout(user.id) *> SeeOther.headers(Location(login))
+    }
+
+  private def websocketsRoutes(connect: IO[Connection[IO]], builder: WebSocketBuilder2[IO]): AuthedRoutes[User, IO] =
+    AuthedRoutes.of[User, IO] {
+      case GET -> Root / "ws" as user =>
         connect.flatMap {
           case Connection(send, receive) =>
             builder.build(
@@ -67,9 +65,7 @@ object WebSocketServer extends IOApp {
               _.collect { case Text(str, true) => str }.through(receive)
             )
         }
-    }.orNotFound
-
-
+    }
 
   def database(config: Config.Database): Resource[IO, HikariTransactor[IO]] =
     for {
@@ -107,12 +103,13 @@ object WebSocketServer extends IOApp {
 
         val assets = Router[IO]("assets" -> resourceServiceBuilder("assets").toRoutes)
 
-        val routes = gRoutes <+> userRoutes(users) <+> healths <+> assets <+> index
+        val routes = gRoutes <+> auth(users)(userRoutes) <+> healths <+> assets <+> index
+        val wsRoute = (b: WebSocketBuilder2[IO]) => auth(users)(websocketsRoutes(port.connect, b))
 
         migrate(db) *>
           BlazeServerBuilder[IO]
             .bindHttp(config.http.webSocketPort, "0.0.0.0")
-            .withHttpWebSocketApp(websocketsRoutes(port.connect))
+            .withHttpWebSocketApp(wsRoute(_).orNotFound)
             .withHttpApp(routes.orNotFound)
             .serve
             .compile
