@@ -1,7 +1,6 @@
 name: Deploy to Digital Ocean
 
 on:
-  workflow_call:
   push:
     branches: [ master ]
     paths:
