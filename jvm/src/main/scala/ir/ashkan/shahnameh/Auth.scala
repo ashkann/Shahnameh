@@ -4,9 +4,7 @@ import cats.Monad
 import cats.data.OptionT
 import ir.ashkan.shahnameh.Users.User
 import org.http4s.Request
-import simulacrum._
 
-@typeclass
 trait Auth[F[_]] {
   def auth(req: Request[F]): OptionT[F, User]
 }

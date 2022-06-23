@@ -9,7 +9,6 @@ import doobie.implicits._
 import Sessions.SessionId
 import simulacrum._
 
-@typeclass
 trait Users[F[_]] {
 
   import Users.{User, UserId}
@@ -35,6 +34,8 @@ object Users {
   type UserId = Long
 
   case class User(id: UserId, name: String, email: String, picture: String, sessionId: Option[SessionId])
+
+  def apply[F[_]](implicit ev: Users[F]): Users[F] = ev
 
   def fromGoogle(user: GoogleOIDC.User): User =
     User(0, name = user.name, email = user.email, picture = user.picture, None)

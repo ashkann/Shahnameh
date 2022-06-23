@@ -7,7 +7,6 @@ import simulacrum._
 import java.util.UUID
 import scala.util.Try
 
-@typeclass
 trait Sessions[F[_]] {
 
   import Sessions.SessionId
@@ -21,6 +20,8 @@ trait Sessions[F[_]] {
 
 object Sessions {
   case class SessionId private(value: UUID)
+
+  def apply[F[_]](implicit ev: Sessions[F]): Sessions[F] = ev
 
   def generateId: SessionId = SessionId(UUID.randomUUID())
   def fromString(uuid: String): Option[SessionId] = Try(UUID.fromString(uuid)).toOption.map(SessionId)

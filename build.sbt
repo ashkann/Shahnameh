@@ -1,9 +1,8 @@
 val sharedSettings = Seq(
-  scalaVersion := "2.13.6",
+  scalaVersion := "2.13.8",
   scalacOptions += "-Ymacro-annotations",
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-
 )
 
 val jvmDeps = {
@@ -15,7 +14,6 @@ val jvmDeps = {
     val mouse = "1.0.7"
     val sttp = "3.3.16"
     val doobie = "1.0.0-RC1"
-    val simulacrum = "1.0.1"
   }
 
   Seq(
@@ -27,7 +25,6 @@ val jvmDeps = {
     "org.typelevel" %% "mouse" % Version.mouse,
     "org.typelevel" %% "cats-effect" % Version.catsEffects,
     "org.typelevel" %% "cats-effect-laws" % "3.3-393-da7c7c7" % Test,
-    "org.typelevel" %% "simulacrum" % Version.simulacrum,
 
     "org.tpolecat" %% "doobie-core"      % Version.doobie,
     "org.tpolecat" %% "doobie-hikari"    % Version.doobie,
