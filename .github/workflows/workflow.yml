@@ -5,6 +5,8 @@ on:
     paths:
       - 'k8s/**'
       - '.github/workflows/**'
+      - 'js/**'
+      - 'jvm/**'
 jobs:
   Deploy-to-DigitalOcean:
     runs-on: ubuntu-latest
