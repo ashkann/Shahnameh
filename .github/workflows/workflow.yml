@@ -25,4 +25,5 @@ jobs:
       - run: sbt ShahnamehJS/fastLinkJS
       - run: docker build -f Dockerfile.assets -t registry.digitalocean.com/shahnameh/assets:$(echo $GITHUB_SHA | head -c7) .
       - run: doctl registry login --expiry-seconds 1200
-      - run: docker push registry.digitalocean.com/shahnameh/shahnameh:$(echo $GITHUB_SHA | head -c7)
+      - run: docker push registry.digitalocean.com/shahnameh/server:$(echo $GITHUB_SHA | head -c7)
+      - run: docker push registry.digitalocean.com/shahnameh/assets:$(echo $GITHUB_SHA | head -c7)
