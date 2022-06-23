@@ -1,0 +1,43 @@
+name: Deploy to Digital Ocean
+on:
+  workflow_call:
+  push:
+    branches: [ master ]
+    paths:
+      - 'k8s/**'
+
+env:
+  EXAMPLE: ashkan
+
+jobs:
+  deploy-to-k8s:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+      - uses: actions/checkout@v2
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+      - run: sbt ShahnamehJVM/assembly
+      - run: docker build -f Dockerfile.backend -t registry.digitalocean.com/shahnameh/server:$(echo $GITHUB_SHA | head -c7) .
+      - run: sbt ShahnamehJS/fastLinkJS
+      - run: docker build -f Dockerfile.assets -t registry.digitalocean.com/shahnameh/assets:$(echo $GITHUB_SHA | head -c7) .
+      - run: doctl registry login --expiry-seconds 1200
+      - run: docker push registry.digitalocean.com/shahnameh/shahnameh:$(echo $GITHUB_SHA | head -c7)
+
+#  - uses: actions/setup-java@v2
+#  with:
+#    java-version: '8'
+#    distribution: 'adopt'
+#- run: sbt ShahnamehJVM/assembly
+#- run: docker build -f Dockerfile.backend -t ${{ env.IMAGE }} .
+#- run: sbt ShahnamehJS/fastLinkJS
+#- run: docker build -f Dockerfile.assets -t ${{ env.ASSETS_IMAGE }} .

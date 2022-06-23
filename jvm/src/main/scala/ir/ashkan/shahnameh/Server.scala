@@ -7,7 +7,6 @@ import cats.effect.std.Console
 import cats.syntax.all._
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import mouse.any._
 import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.dsl.{Http4sDsl => Dsl}
 import org.http4s.headers.Location
