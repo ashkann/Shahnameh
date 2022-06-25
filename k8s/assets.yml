@@ -20,7 +20,6 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 80
-              name: assets-http
 ---
 apiVersion: v1
 kind: Service
@@ -33,4 +32,4 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: assets-http
+      targetPort: 80
