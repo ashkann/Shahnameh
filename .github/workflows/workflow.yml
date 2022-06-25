@@ -3,7 +3,6 @@ on:
   push:
     branches: [ master ]
     paths:
-      - 'k8s/**'
       - '.github/workflows/**'
       - 'js/**'
       - 'jvm/**'
