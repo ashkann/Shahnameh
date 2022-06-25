@@ -8,10 +8,8 @@ on:
       - 'js/**'
       - 'jvm/**'
 env:
-  REPO_NAME: ${{ github.repository }}
-  CONTAINER_REGISTRY: ghcr.io
-  SERVER_IMAGE_NAME: ${{ github.repository }}/server
-  ASSETS_IMAGE_NAME: ${{ github.repository }}/assets
+  SERVER_IMAGE_NAME: ghcr.io/ashkann/shahnameh/server
+  ASSETS_IMAGE_NAME: ghcr.io/ashkann/shahnameh/assets
 
 jobs:
   Deploy-to-DigitalOcean:
