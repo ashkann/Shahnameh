@@ -29,7 +29,7 @@ jobs:
           context: .
           push: true
           file: Dockerfile.server
-          tags: $CONTAINER_REGISTRY/$REPO_NAME/$SERVER_IMAGE_NAME
+          tags: ${{ env.SERVER_IMAGE_NAME }}
 
       - run: sbt ShahnamehJS/fastLinkJS
       - uses: docker/build-push-action@v3
@@ -37,7 +37,7 @@ jobs:
           context: .
           push: true
           file: Dockerfile.assets
-          tags: $CONTAINER_REGISTRY/$REPO_NAME/$ASSETS_IMAGE_NAME
+          tags: ${{ env.ASSETS_IMAGE_NAME }}
 #      - uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
 #        with:
 #          registry: ${{ env.CONTAINER_REGISTRY }}
