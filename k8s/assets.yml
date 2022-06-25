@@ -20,15 +20,17 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+            - name: assets-http
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: assets
 spec:
+  type: NodePort
   selector:
     app: assets
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
+      targetPort: assets-http
