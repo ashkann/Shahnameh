@@ -20,6 +20,11 @@ jobs:
         with:
           java-version: '8'
           distribution: 'adopt'
+      - uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - run: sbt ShahnamehJVM/assembly
       - uses: docker/build-push-action@v3
