@@ -18,9 +18,8 @@ spec:
         - name: assets
           image: ghcr.io/ashkann/shahnameh/assets
           imagePullPolicy: Always
-          ports:
-            - containerPort: 80
-
+#          ports:
+#            - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
